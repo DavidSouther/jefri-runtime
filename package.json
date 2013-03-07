@@ -31,10 +31,10 @@
     "superscore": "~0.3.3"
   },
   "devDependencies": {
-    "grunt": "0.3.x",
-    "grunt-contrib": "0.2.x",
-    "grunt-livescript": "0.4.x",
-    "grunt-jasmine-node": "0.0.2",
+    "grunt": "0.4.x",
+    "grunt-contrib": "0.4.x",
+    "grunt-livescript": "*",
+    "grunt-jasmine-node": "*",
     "jasmine-node": "1.0.26"
   },
   "licenses": [{"type": "MIT"}]

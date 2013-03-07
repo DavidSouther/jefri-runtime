@@ -1,7 +1,7 @@
 /* global module:false */
 module.exports = function(grunt) {
 	grunt.initConfig({
-		pkg: '<json:package.json>',
+		pkg: grunt.file.readJSON('package.json'),
 		meta: {
 			banner: '// <%= pkg.title || pkg.name %> - v<%= pkg.version %> - ' +
 				'<%= grunt.template.today("yyyy-mm-dd") %>\n' +
@@ -31,17 +31,25 @@ module.exports = function(grunt) {
 				}
 			},
 			qunit: {
-				files: {
-					"test/qunit/min/ls/compiled/*.js": ["test/qunit/min/ls/*ls"]
-				},
+				files: [{
+					expand: true,
+					cwd: "test/qunit/min/ls/",
+					src: "*ls",
+					dest: "test/qunit/min/ls/compiled/",
+					ext: '.js'
+				}],
 				options: {
 					bare: true
 				}
 			},
 			jasmine: {
-				files: {
-					'test/spec/node/spec/*.spec.js': 'test/spec/node/ls/*.ls'
-				}
+				files: [{
+					expand: true,
+					cwd: "test/spec/node/ls/",
+					src: "*ls",
+					dest: 'test/spec/node/spec/',
+					ext: '.spec.js'
+				}],
 			}
 		},
 		concat: {
@@ -89,10 +97,12 @@ module.exports = function(grunt) {
 				tasks: ["default"]
 			}
 		},
-		server: {
+		connect: {
 			test: {
-				port: 8000,
-				base: '.'
+				options: {
+					port: 8000,
+					base: '.'
+				}
 			}
 		}
 	});
@@ -101,10 +111,9 @@ module.exports = function(grunt) {
 	grunt.loadNpmTasks('grunt-livescript');
 	grunt.loadNpmTasks('grunt-jasmine-node');
 
-	grunt.registerTask('jasmineTests', 'livescript:jasmine jasmine_node');
-	grunt.registerTask('qunitTests', 'livescript:qunit concat:qunitMin qunit:min');
-	grunt.registerTask('nunit', 'test');
-	grunt.registerTask('nunitTests', 'livescript:nunit nunit');
-	grunt.registerTask('tests', 'server:test nunitTests qunitTests jasmineTests');
-	grunt.registerTask('default', 'clean livescript concat:node concat:min tests');
+	grunt.registerTask('jasmineTests', ['livescript:jasmine', 'jasmine_node']);
+	grunt.registerTask('qunitTests', ['livescript:qunit', 'concat:qunitMin', 'qunit:min']);
+	grunt.registerTask('nunitTests', ['livescript:nunit', 'nunit']);
+	grunt.registerTask('tests', ['connect:test', 'qunitTests', 'jasmineTests']);
+	grunt.registerTask('default', ['clean', 'livescript', 'concat:node', 'concat:min', 'tests']);
 };
