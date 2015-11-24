@@ -1,2 +1,2 @@
-export { Runtime, Entity } from './Runtime';
+export { Runtime } from './Runtime';
 
