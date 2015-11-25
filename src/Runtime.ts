@@ -49,7 +49,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     this._context.entities[type] = definition;
     this._instances[type] = {};
 
-    definition.Constructor = function(proto: {[k: string]: any} = {}) {
+    definition.Constructor = function( proto: {[k: string]: any} = {}) {
       EventEmitter.call(this);
 
       Object.assign(this, {
@@ -71,8 +71,29 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       }
 
       // Attach a privileged copy of the full id, more for debugging than use.
-      //this._id = this.id(true);
+      this._id = this.id(true);
     };
+
+    definition.Constructor.name = type;
+
+
+    // Set up the prototype for this entity.
+    this._build_prototype(type, definition);
+  }
+
+  _build_prototype(
+      type: string,
+      definition: JEFRi.ContextEntity,
+      protos: JEFRi.Prototypes = {}
+  ) {
+    definition.Constructor.prototype = Object.create(Object.assign(EventEmitter.prototype, {
+      _type: function(): string { return type; },
+      id: function(full: boolean = false): string {
+        let typePrefix: string = '';
+        if (full) { typePrefix = this._type() + '/'; }
+        return `${typePrefix}${this._id}`;
+      }
+    }));
   }
 
   constructor(contextUri: string, options: any = {}, protos: any = {}) {

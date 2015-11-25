@@ -28,8 +28,12 @@ declare module JEFRi {
     };
   }
 
-  export interface Prototypes {
+  export interface Properties {
     [k: string]: any;
+  }
+
+  export interface Prototypes {
+    [k: string]: Function;
   }
 
   interface Runtime extends NodeJS.EventEmitter {
@@ -101,6 +105,11 @@ declare module JEFRi {
 
   export enum EntityStatus {
     NEW, PERSISTED, MODIFIED
+  }
+
+  export interface EntityStatic {
+    new (props: Properties): Entity;
+    name: string;
   }
 
   export interface Entity extends NodeJS.EventEmitter {
