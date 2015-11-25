@@ -1,6 +1,8 @@
 import { EventEmitter } from 'events';
 import { UUID, request } from 'jefri-jiffies';
 
+import { EntityComparator } from './jefri';
+
 export class Runtime extends EventEmitter implements JEFRi.Runtime {
   public ready: Promise<JEFRi.Runtime> = null;
   public settings: {[k: string]: any} = {
@@ -87,14 +89,35 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       protos: JEFRi.Prototypes = {}
   ) {
     definition.Constructor.prototype = Object.create(Object.assign(EventEmitter.prototype, {
-      _type: function(): string { return type; },
+      _type: function(full: boolean = false): string {
+        // Get the entity's type, possibly including the context name.
+        return type;
+      },
       id: function(full: boolean = false): string {
+        // Return the id, possibly including the simple entity type.
         let typePrefix: string = '';
         if (full) { typePrefix = this._type() + '/'; }
         return `${typePrefix}${this._id}`;
+      },
+      _definition: function(): JEFRi.ContextEntity { return definition; },
+      _equal: function(other: JEFRi.Entity) {
+        return EntityComparator(this, other);
       }
     }));
+
+    for (let field in definition.properties) {
+      this._build_mutacc(definition, field, definition.properties[field]);
+    }
   }
+
+  _build_mutacc(
+      definition: JEFRi.ContextEntity,
+      field: string,
+      property: JEFRi.EntityProperty
+  ): void {
+    
+  }
+
 
   constructor(contextUri: string, options: any = {}, protos: any = {}) {
     super();

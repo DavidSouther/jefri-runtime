@@ -30,83 +30,83 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 	# Prepare a promise for completing context loading.
 	ready = Promise.defer()
 
-	# Fill in all the privileged properties
-	settings =
-		# If an entity already exists, does JEFRi update or replace?
-		updateOnIntern: true
-		# The constructor for the default store.
-	Object.assign settings, options
+	# # Fill in all the privileged properties
+	# settings =
+	# 	# If an entity already exists, does JEFRi update or replace?
+	# 	updateOnIntern: true
+	# 	# The constructor for the default store.
+	# Object.assign settings, options
 
-	Object.assign @,
-		settings: settings
-
-		ready: ready.promise
-
-		# In-memory representation of the loaded context.
-		_context:
-			meta: {}
-			contexts: {}
-			entities: {}
-			attributes: {}
-
-		# In-memory store of JEFRi entities.
-		_instances: {}
+	# Object.assign @,
+	# 	settings: settings
+	#
+	# 	ready: ready.promise
+	#
+	# 	# In-memory representation of the loaded context.
+	# 	_context:
+	# 		meta: {}
+	# 		contexts: {}
+	# 		entities: {}
+	# 		attributes: {}
+	#
+	# 	# In-memory store of JEFRi entities.
+	# 	_instances: {}
 
 	# #### Private helper functions
 	# These handle most of the heavy lifting of building Entity classes.
 
-	# A few default property values.
-	_default = (type) ->
-		switch type
-			when "list" then []
-			when "object" then {}
-			when "boolean" then false
-			when "int" or "float" then 0
-			when "string" then ""
-			else ""
+	# # A few default property values.
+	# _default = (type) ->
+	# 	switch type
+	# 		when "list" then []
+	# 		when "object" then {}
+	# 		when "boolean" then false
+	# 		when "int" or "float" then 0
+	# 		when "string" then ""
+	# 		else ""
 
-	# Takes a "raw" context object and orders it into the internal _context
-	# storage. Also builds constructors and prototypes for the context.
-	_set_context = (context, protos) =>
-		# Save the attributes
-		Object.assign @_context.attributes, context.attributes or {}
+	# # Takes a "raw" context object and orders it into the internal _context
+	# # storage. Also builds constructors and prototypes for the context.
+	# _set_context = (context, protos) =>
+	# 	# Save the attributes
+	# 	Object.assign @_context.attributes, context.attributes or {}
+	#
+	# 	# Prepare each entity. Uses _.each to put (definition, type) in a closure.
+	# 	# _.each context.entities, (definition, type) => # NO SERIOUSLY, definition MUST BE IN A CLOSURE!
+	# 	for type, definition of context.entities
+	# 		definition.type = type
+	# 		_build_constructor definition, type
 
-		# Prepare each entity. Uses _.each to put (definition, type) in a closure.
-		# _.each context.entities, (definition, type) => # NO SERIOUSLY, definition MUST BE IN A CLOSURE!
-		for type, definition of context.entities
-			definition.type = type
-			_build_constructor definition, type
+	# _build_constructor = (definition, type) =>
+	# 	# Keep the definition locally, modifying it directly with the ctor and prototypes.
+	# 	@_context.entities[type] = definition
+	# 	# Ready the instances bucket
+	# 	@_instances[type] = {}
+	#
+	# 	# Build an entity's constructor.
+	# 	definition.Constructor = (proto) ->
+	# 		# Set the privileged accounting and property data.
+	# 		Object.assign @,
+	# 			_new: true
+	# 			_modified: {_count: 0}
+	# 			_fields: {}
+	# 			_relationships: {}
+	# 			_runtime: ec
+	#
+	# 		# Check for runtime prototype override.
+	# 		proto = proto || {}
 
-	_build_constructor = (definition, type) =>
-		# Keep the definition locally, modifying it directly with the ctor and prototypes.
-		@_context.entities[type] = definition
-		# Ready the instances bucket
-		@_instances[type] = {}
+			# # Set the key, generate if not set by proto.
+			# proto[definition.key] or= UUID.v4()
 
-		# Build an entity's constructor.
-		definition.Constructor = (proto) ->
-			# Set the privileged accounting and property data.
-			Object.assign @,
-				_new: true
-				_modified: {_count: 0}
-				_fields: {}
-				_relationships: {}
-				_runtime: ec
-
-			# Check for runtime prototype override.
-			proto = proto || {}
-
-			# Set the key, generate if not set by proto.
-			proto[definition.key] or= UUID.v4()
-
-			# Set a bunch of default values, so they're all available.
-			for name, property of definition.properties
-				# Use the value provided to the constructor, or the default.
-				def = proto[name] || _default(property.type)
-				@[name] = def
-
-			# Attach a privileged copy of the full id, more for debugging than use.
-			@_id = @id true
+			# # Set a bunch of default values, so they're all available.
+			# for name, property of definition.properties
+			# 	# Use the value provided to the constructor, or the default.
+			# 	def = proto[name] || _default(property.type)
+			# 	@[name] = def
+			#
+			# # Attach a privileged copy of the full id, more for debugging than use.
+			# @_id = @id true
 
 			# Add runtime methods //?
 			# Object.assign @::, proto::
@@ -119,22 +119,22 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 
 			return @
 
-		definition.Constructor.name = type
-
-		#Set up the prototype for any of this entity.
-		_build_prototype(type, definition, (protos && protos[type]) )
+		# # definition.Constructor.name = type
+		#
+		# #Set up the prototype for any of this entity.
+		# _build_prototype(type, definition, (protos && protos[type]) )
 
 	# Set up all the required methods - id!, _type!, and the mutaccs.
-	_build_prototype = (type, definition, proto) =>
-		definition.Constructor:: = Object.create Object.assign {}, Eventer::,
-			# Get this entity's type. Use the closure'd reference.
-			_type: (full) ->
-				full = full || false
-				type
-
-			# Get this entity's ID.
-			id: (full) ->
-				"#{if full then "#{@_type()}/" else ""}#{@[definition.key]}"
+	# _build_prototype = (type, definition, proto) =>
+		# definition.Constructor:: = Object.create Object.assign {}, Eventer::,
+			# # Get this entity's type. Use the closure'd reference.
+			# _type: (full) ->
+			# 	full = full || false
+			# 	type
+			#
+			# # Get this entity's ID.
+			# id: (full) ->
+			# 	"#{if full then "#{@_type()}/" else ""}#{@[definition.key]}"
 
 			# Find the status of an entity.
 			_status: ->
@@ -145,7 +145,7 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 				else
 					"MODIFIED"
 
-			_definition: -> definition
+			# _definition: -> definition
 
 			# Add this entity to the persist transaction
 			_persist: (transaction, callback) ->
@@ -187,8 +187,8 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 				@[definition.key] = 0
 				@emit "destroyed", {}
 
-			_compare: (b) ->
-				JEFRi.EntityComparator @, b
+			# _compare: (b) ->
+			# 	JEFRi.EntityComparator @, b
 
 		# Alias _encode as toJSON for ES5 JSON.stringify()
 		definition.Constructor::toJSON = definition.Constructor::_encode

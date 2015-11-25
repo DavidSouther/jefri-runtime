@@ -121,7 +121,7 @@ declare module JEFRi {
     _encode(): any;
     toJSON(): any;
     _destroy(): void;
-    _compare(e: Entity): boolean;
+    _equal(e: Entity): boolean;
   }
 
   export interface EntityArray<E extends Entity> extends Array<E> {
