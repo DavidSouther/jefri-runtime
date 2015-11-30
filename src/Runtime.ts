@@ -18,7 +18,6 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
 
   private _instances = { };
 
-
   // #### Private helper functions
   // These handle most of the heavy lifting of building Entity classes.
   private _default(type: string): any {
@@ -54,36 +53,55 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     definition.Constructor = function( proto: {[k: string]: any} = {}) {
       EventEmitter.call(this);
 
-      Object.assign(this, {
+      // Set the entity key as early as possible.
+      proto[definition.key] = proto[definition.key] || UUID.v4();
+
+      let metadata: JEFRi.EntityMetadata = {
         _new: true,
         _modified: {_count: 0},
         _fields: {},
         _relationships: {},
         _runtime: EC
-      });
-
-      // Set the key, if not provided.
-      proto[definition.key] = proto[definition.key] || UUID.v4();
-
-      // Set a bunch of default values, so they're all available.
-      for (let name in definition.properties) {
-        let property = definition.properties[name];
-        let def = proto[name] || EC._default(property.type);
-        this[name] = def;
-      }
+      };
 
       Object.defineProperties(this, {
         _id: {
           configurable: false,
           enumerable: true,
-          get: function() { return this.id(true); }
+          get: function() { return `${type}/${this[definition.key]}`; }
         },
         _definition: {
           configurable: false,
           enumerable: false,
           get: function() { return definition; }
-        }
+        },
+        _metadata: {
+          configurable: false,
+          enumerable: false,
+          get: function() { return metadata; }
+        },
+	_status: {
+	  configurable: false,
+	  enumerable: false,
+          // Determine the status of the entity.
+          get: function() {
+	    if(this._metadata._new) {
+	      return "NEW";
+            } else if (this._metadata._modified._count === 0) {
+              return "PERSISTED";
+            } else {
+	      return "MODIFIED";
+            }
+	  }
+	}
       });
+
+      // Set a bunch of default values, so they're all available.
+      for (let name in definition.properties) {
+        let property = definition.properties[name];
+        let dflt= proto[name] || EC._default(property.type);
+        this._metadata._fields[name] = dflt;
+      }
     };
 
     definition.Constructor.name = type;
@@ -123,9 +141,26 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       field: string,
       property: JEFRi.EntityProperty
   ): void {
-    
-  }
+    Object.defineProperty(definition.Constructor.prototype, field, {
+      configurable: false,
+      enumerable: true,
+      get: function() { return this._metadata._fields[field]; },
+      set: function(value) {
+        // Only update when it is a different value.
+        if(this._metadata._fields[field] !== value) {
+          // The actual set.
+          this._metadata._fields[field] = value;
 
+          // Update the modified list, if set.
+          if(typeof this._metadata._modified[field] === 'undefined') {
+            this._metadata._modified[field] = value;
+            this._metadata._modified._count += 1;
+          }
+        }
+        this.emit('modified', [field, value]);
+      }
+    });
+  }
 
   constructor(contextUri: string, options: any = {}, protos: any = {}) {
     super();

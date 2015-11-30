@@ -117,11 +117,27 @@ declare module JEFRi {
     _definition: ContextEntity;
     _status: string|EntityStatus;
     _type(full?: boolean): string;
+    _metadata: EntityMetadata;
     id(full?: boolean): string;
     _encode(): any;
     toJSON(): any;
     _destroy(): void;
     _equal(e: Entity): boolean;
+  }
+
+  export interface EntityMetadata {
+    _runtime: Runtime;
+    _new: boolean;
+    _modified: {
+      _count: number,
+      [k: string]: number|string|boolean|Array<number|string|boolean>
+    };
+    _fields: {
+      [k: string]: number|string|boolean|Array<number|string|boolean>
+    };
+    _relationships: {
+      [k: string]: Entity|Array<Entity>
+    };
   }
 
   export interface EntityArray<E extends Entity> extends Array<E> {
