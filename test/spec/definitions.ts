@@ -14,8 +14,8 @@ describe("Definition", function() {
       name: "southerd",
       address: "davidsouther@gmail.com"
     });
-    let definition = user._definition();
-    expect(definition).to.have.property('type');
-    expect(definition.type).to.equal('User');
+    expect(user._definition).to.have.property('type');
+    expect(user._definition.type).to.equal('User');
   });
 });
+

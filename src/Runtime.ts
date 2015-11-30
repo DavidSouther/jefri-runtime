@@ -72,12 +72,21 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         this[name] = def;
       }
 
-      // Attach a privileged copy of the full id, more for debugging than use.
-      this._id = this.id(true);
+      Object.defineProperties(this, {
+        _id: {
+          configurable: false,
+          enumerable: true,
+          get: function() { return this.id(true); }
+        },
+        _definition: {
+          configurable: false,
+          enumerable: false,
+          get: function() { return definition; }
+        }
+      });
     };
 
     definition.Constructor.name = type;
-
 
     // Set up the prototype for this entity.
     this._build_prototype(type, definition);
@@ -99,7 +108,6 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         if (full) { typePrefix = this._type() + '/'; }
         return `${typePrefix}${this._id}`;
       },
-      _definition: function(): JEFRi.ContextEntity { return definition; },
       _equal: function(other: JEFRi.Entity) {
         return EntityComparator(this, other);
       }
