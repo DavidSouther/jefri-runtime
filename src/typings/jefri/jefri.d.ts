@@ -112,10 +112,11 @@ declare module JEFRi {
     name: string;
   }
 
-  export interface Entity extends NodeJS.EventEmitter {
+  export interface Entity {
     _id: string;
     _definition: ContextEntity;
     _status: string|EntityStatus;
+    _events: NodeJS.EventEmitter;
     _type(full?: boolean): string;
     _metadata: EntityMetadata;
     id(full?: boolean): string;

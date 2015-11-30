@@ -1,5 +1,5 @@
 import { EventEmitter } from 'events';
-import { UUID, request } from 'jefri-jiffies';
+import { UUID, request, lock } from 'jefri-jiffies';
 
 import { EntityComparator } from './jefri';
 
@@ -51,8 +51,6 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     this._instances[type] = {};
 
     definition.Constructor = function( proto: {[k: string]: any} = {}) {
-      EventEmitter.call(this);
-
       // Set the entity key as early as possible.
       proto[definition.key] = proto[definition.key] || UUID.v4();
 
@@ -64,11 +62,13 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         _runtime: EC
       };
 
+      let events: EventEmitter = new EventEmitter();
+
       Object.defineProperties(this, {
         _id: {
           configurable: false,
           enumerable: true,
-          get: function() { return `${type}/${this[definition.key]}`; }
+          get: function() { return this[definition.key]; }
         },
         _definition: {
           configurable: false,
@@ -80,20 +80,25 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
           enumerable: false,
           get: function() { return metadata; }
         },
-	_status: {
-	  configurable: false,
-	  enumerable: false,
+        _events: {
+          configurable: false,
+          enumerable: false,
+          get: function() { return events; }
+        },
+        _status: {
+          configurable: false,
+          enumerable: false,
           // Determine the status of the entity.
           get: function() {
-	    if(this._metadata._new) {
-	      return "NEW";
+            if(this._metadata._new) {
+              return "NEW";
             } else if (this._metadata._modified._count === 0) {
               return "PERSISTED";
             } else {
-	      return "MODIFIED";
+              return "MODIFIED";
             }
-	  }
-	}
+          }
+        }
       });
 
       // Set a bunch of default values, so they're all available.
@@ -115,7 +120,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       definition: JEFRi.ContextEntity,
       protos: JEFRi.Prototypes = {}
   ) {
-    definition.Constructor.prototype = Object.create(Object.assign(EventEmitter.prototype, {
+    definition.Constructor.prototype = Object.create({
       _type: function(full: boolean = false): string {
         // Get the entity's type, possibly including the context name.
         return type;
@@ -129,10 +134,18 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       _equal: function(other: JEFRi.Entity) {
         return EntityComparator(this, other);
       }
-    }));
+    });
 
     for (let field in definition.properties) {
       this._build_mutacc(definition, field, definition.properties[field]);
+    }
+
+    for (let field in definition.relationships) {
+      this._build_relationship(
+        definition,
+        field,
+        definition.relationships[field]
+      );
     }
   }
 
@@ -157,9 +170,105 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
             this._metadata._modified._count += 1;
           }
         }
-        this.emit('modified', [field, value]);
+        this._events.emit('modified property', [field, value]);
       }
     });
+  }
+
+  _build_relationship(
+      definition: JEFRi.ContextEntity,
+      field: string,
+      relationship: JEFRi.EntityRelationship
+  ): void {
+    let getter: () => JEFRi.Entity = null;
+    let setter: (value: JEFRi.Entity) => void = null;
+
+    if (relationship.type === 'has_many') {
+      let property = definition.properties[relationship.property];
+      if (property && property.type === 'list') {
+      } else {
+      }
+    } else {
+      getter = _has_one_get;
+      setter = _has_one_set();
+    }
+
+    Object.defineProperty(definition.Constructor.prototype, field, {
+      enumerable: false,
+      configurable: false,
+      get: getter,
+      set: setter
+    });
+
+    function _has_one_get(): JEFRi.Entity {
+      if (!this._metadata._relationships[field]) {
+        // Try to find the entity
+        let instances = this._metadata._runtime._instances;
+        let instance = instances[relationship.to.type][this[relationship.property]];
+        if (!instance) {
+          // We need to make one
+          let key = {
+            [relationship.to.property]: this[relationship.property]
+          };
+          instance = this._metadata._runtime.build(relationship.to.type, key);
+        }
+        this[field] = instance;
+      }
+      return this._metadata._relationships[field];
+    }
+
+    // Generate an accessor for a has_one relationship type.
+    // This accessor will return a single instance of the remote reference,
+    // and will follow appropriate back references.
+    //
+    // The local entity should have some string property whose value will match
+    // the remote entity's key property.
+    function _has_one_set(): (related: JEFRi.Entity) => void {
+      return <(r: JEFRi.Entity) => void>lock(
+          function(related: JEFRi.Entity
+      ): void {
+        if(related === null) {
+          // Actually a remove.
+          related = this._metadata._relationships[field];
+          if (related) {
+            try {
+              related[relationship.back].remove(this);
+            } catch (e) {
+              related[relationship.back] = null;
+            }
+          }
+          this._metadata._relationships[field] = null;
+          this[relationship.property] = null;
+        } else {
+          this._metadata._relationships[field] = related;
+          _resolve_ids.call(this, related);
+          if (relationship.back) {
+            related[relationship.back] = this;
+          }
+        }
+        this._events.emit('modified relationship', [field, related]);
+      });
+    }
+
+    function _resolve_ids(related: JEFRi.Entity) {
+      if(!related) {
+        this.relationship.property = void 0;
+      } else if (definition.key === relationship.property) {
+        related[relationship.to.property] = this[relationship.property];
+      } else if (related._definition.key === relationship.to.property) {
+        this[relationship.property] = related[relationship.to.property];
+      } else {
+        if(this[relationship.to.property].match(UUID.rvalid)) {
+          related[relationship.to.property] = this[relationship.to.property];
+        } else if (related[relationship.to.property].match(UUID.rvalid)) {
+          this[relationship.property] = related[relationship.to.property];
+        } else {
+          let id: string = UUID.v4();
+          this[relationship.property] = id;
+          related[relationship.to.property] = id;
+        }
+      }
+    }
   }
 
   constructor(contextUri: string, options: any = {}, protos: any = {}) {
@@ -181,6 +290,9 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     if (contextUri !== '') {
       this.load(contextUri, protos)
         .then(()=>ready.resolve(this), (e: any)=> ready.reject(e));
+    } else if (options.debug) {
+      this._set_context(options.debug.context, protos);
+      ready.resolve(this);
     }
   }
 
@@ -188,7 +300,16 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     if (!this._context.entities[entityType]) {
       throw new Error(`${entityType} not defined in this runtime.`);
     }
-    return <E>(new this._context.entities[entityType].Constructor(obj));
+
+    let definition = this.definition(entityType);
+    let entity: E = null;
+    if (definition && obj.hasOwnProperty(definition.key)) {
+
+    } else {
+      entity = <E>(new this._context.entities[entityType].Constructor(obj));
+      this._instances[entityType][entity.id()] = entity;
+    }
+    return entity;
   }
 
   load(contextUri: string, protos: JEFRi.Prototypes = {}): Promise<JEFRi.Runtime> {
