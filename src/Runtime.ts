@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events';
 import { UUID, request, lock } from 'jefri-jiffies';
 
-import { EntityComparator } from './jefri';
+import { EntityComparator, EntityArray } from './jefri';
 
 export class Runtime extends EventEmitter implements JEFRi.Runtime {
   public ready: Promise<JEFRi.Runtime> = null;
@@ -131,7 +131,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         if (full) { typePrefix = this._type() + '/'; }
         return `${typePrefix}${this._id}`;
       },
-      _equal: function(other: JEFRi.Entity) {
+      _equals: function(other: JEFRi.Entity) {
         return EntityComparator(this, other);
       }
     });
@@ -181,12 +181,14 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       relationship: JEFRi.EntityRelationship
   ): void {
     let getter: () => JEFRi.Entity = null;
-    let setter: (value: JEFRi.Entity) => void = null;
+    let setter: (value: JEFRi.Entity|any[]) => void = null;
 
     if (relationship.type === 'has_many') {
       let property = definition.properties[relationship.property];
       if (property && property.type === 'list') {
       } else {
+        getter = _has_many_get;
+        setter = _has_many_set;
       }
     } else {
       getter = _has_one_get;
@@ -199,6 +201,29 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       get: getter,
       set: setter
     });
+
+    function _has_many_get() {
+      let list = this._metadata._relationships[field];
+      if (!list) {
+        list = this._metadata._relationships[field] =
+          new EntityArray(this, field, relationship);
+        for (let id of this._metadata._runtime._instances[relationship.to.type]) {
+          let entity = this._metadata._runtime._instances[id];
+          if (entity[relationship.to.property] == this[relationship.property]) {
+            list.add(entity);
+          }
+        }
+      }
+      return list;
+    }
+
+    function _has_many_set(...entities: any[]): void {
+      entities = entities.reduce(((a, b) => a.concat(b)), []);
+      this[field]; // Lazy load
+      for(let entity of entities) {
+        this[field].add(entity);
+      }
+    }
 
     function _has_one_get(): JEFRi.Entity {
       if (!this._metadata._relationships[field]) {

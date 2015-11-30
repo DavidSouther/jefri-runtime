@@ -136,14 +136,14 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 			# id: (full) ->
 			# 	"#{if full then "#{@_type()}/" else ""}#{@[definition.key]}"
 
-			# Find the status of an entity.
-			_status: ->
-				if @_new
-					"NEW"
-				else if @_modified._count is 0
-					"PERSISTED"
-				else
-					"MODIFIED"
+			# # Find the status of an entity.
+			# _status: ->
+			# 	if @_new
+			# 		"NEW"
+			# 	else if @_modified._count is 0
+			# 		"PERSISTED"
+			# 	else
+			# 		"MODIFIED"
 
 			# _definition: -> definition
 
@@ -191,11 +191,11 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 			# 	JEFRi.EntityComparator @, b
 
 		# Alias _encode as toJSON for ES5 JSON.stringify()
-		definition.Constructor::toJSON = definition.Constructor::_encode
+		# definition.Constructor::toJSON = definition.Constructor::_encode
 
 		# Prepare property mutators and accessors.
-		for field, property of definition.properties
-			_build_mutacc definition, field, property
+		# for field, property of definition.properties
+		# 	_build_mutacc definition, field, property
 
 		# Prepare navigation mutaccs.
 		for rel_name, relationship of definition.relationships
@@ -237,31 +237,31 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 
 	# Attach the mutators and accessors (mutaccs) to the prototype.
 	_build_relationship = (definition, field, relationship) ->
-		# Generate an accessor for a has_one relationship type.
-		# This accessor will return a single instance of the remote reference,
-		# and will follow appropriate back references.
-		#
-		# The local entity should have some string property whose value will match
-		# the remote entity's key property.
-		_has_one = ->
-			set: lock (related) ->
-				if related is null # Actually a "Remove"
-					if "is_a" isnt relationship.type
-						try
-							@_relationships[field]?[relationship.back].remove @
-						catch
-							@_relationships[field]?[relationship.back] = null
-					@_relationships[field] = null
-					@[relationship.property] = null
-				else # A set
-					@_relationships[field] = related
-					resolve_ids.call @, related
-					if "is_a" isnt relationship.type
-						if relationship.back then related?[relationship.back] = @
-				# Notify observers
-				@_modified._count += 1
-				@emit "modified", [field, related]
-				@
+		# # Generate an accessor for a has_one relationship type.
+		# # This accessor will return a single instance of the remote reference,
+		# # and will follow appropriate back references.
+		# #
+		# # The local entity should have some string property whose value will match
+		# # the remote entity's key property.
+		# _has_one = ->
+		# 	set: lock (related) ->
+		# 		if related is null # Actually a "Remove"
+		# 			if "is_a" isnt relationship.type
+		# 				try
+		# 					@_relationships[field]?[relationship.back].remove @
+		# 				catch
+		# 					@_relationships[field]?[relationship.back] = null
+		# 			@_relationships[field] = null
+		# 			@[relationship.property] = null
+		# 		else # A set
+		# 			@_relationships[field] = related
+		# 			resolve_ids.call @, related
+		# 			if "is_a" isnt relationship.type
+		# 				if relationship.back then related?[relationship.back] = @
+		# 		# Notify observers
+		# 		@_modified._count += 1
+		# 		@emit "modified", [field, related]
+		# 		@
 
 			get: ->
 				if @_relationships[field] is undefined
@@ -359,24 +359,24 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 		Object.defineProperty definition.Constructor::, field, access
 
 		# Helper for has_a::set
-		resolve_ids = (related) ->
-			# If related is undefined, unset the property
-			if related is undefined
-				@[relationship.property] = undefined
-			# If @'s key is relprop, use it for related
-			else if definition.key is relationship.property # Always use this' ID if we can
-				related[relationship.to.property] = @[relationship.property]
-			else if related._definition().key is relationship.to.property # Back-up ID
-				@[relationship.property] = related[relationship.to.property]
-			else # No IDs. If one is set, set the other to that
-				if @[relationship.property].match UUID.rvalid
-					related[relationship.to.property] = @[relationship.property]
-				else if related[relationship.to.property].match UUID.rvalid
-					@[relationship.property] = related[relationship.to.property]
-				else #Nothing is set, use this' id
-					id = UUID.v4()
-					@[relationship.property] = id
-					related[relationship.to.property] = id
+		# resolve_ids = (related) ->
+			# # If related is undefined, unset the property
+			# if related is undefined
+			# 	@[relationship.property] = undefined
+			# # If @'s key is relprop, use it for related
+			# else if definition.key is relationship.property # Always use this' ID if we can
+			# 	related[relationship.to.property] = @[relationship.property]
+			# else if related._definition().key is relationship.to.property # Back-up ID
+			# 	@[relationship.property] = related[relationship.to.property]
+			# else # No IDs. If one is set, set the other to that
+			# 	if @[relationship.property].match UUID.rvalid
+			# 		related[relationship.to.property] = @[relationship.property]
+			# 	else if related[relationship.to.property].match UUID.rvalid
+			# 		@[relationship.property] = related[relationship.to.property]
+			# 	else #Nothing is set, use this' id
+			# 		id = UUID.v4()
+			# 		@[relationship.property] = id
+			# 		related[relationship.to.property] = id
 
 	_build_method = (definition, method, func) ->
 		func =
@@ -459,13 +459,13 @@ JEFRi.Runtime:: = Object.create Object.assign {}, Eventer,
 
 	# Return a new instance of an object described in the context.
 	build: (type, obj) ->
-		def = @definition(type)
-		if !def
-			throw "JEFRi::Runtime::build '#{type}' is not a defined type in this context."
-		obj = obj || {}
-		# We are going to build the new entity first, then, if there is a local
-		# instance, we will extend the local instance with the new instance.
-		r = new def.Constructor obj
+		# def = @definition(type)
+		# if !def
+		# 	throw "JEFRi::Runtime::build '#{type}' is not a defined type in this context."
+		# obj = obj || {}
+		# # We are going to build the new entity first, then, if there is a local
+		# # instance, we will extend the local instance with the new instance.
+		# r = new def.Constructor obj
 		if def.key of obj
 			# If the entity key is specified in obj, check the local storage.
 			demi = {_type : type}
@@ -476,8 +476,8 @@ JEFRi.Runtime:: = Object.create Object.assign {}, Eventer,
 				instance = instance[0]
 				Object.assign instance._fields, r._fields
 				return instance
-		@_instances[type][r.id() ] = r
-		return r
+		# @_instances[type][r.id() ] = r
+		# return r
 
 	# Expand and intern a transaction.
 	expand: (transaction, action) ->

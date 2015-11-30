@@ -6,3 +6,51 @@ export function isEntity(obj: any): boolean {
   // Duck type check if an object is an entity.
   return typeof obj._type == "function" && typeof obj.id == "function" || false;
 }
+
+import { EventEmitter } from 'events';
+
+export class EntityArray<E extends JEFRi.Entity> extends Array<E> {
+  constructor(
+    private entity: JEFRi.Entity,
+    private field: string,
+    private relationship: JEFRi.EntityRelationship,
+    public _events: NodeJS.EventEmitter = new EventEmitter()
+  ) { super() }
+
+  static ADD = 'add';
+  static REMOVE = 'remove';
+  remove(entity: E): EntityArray<E> {
+    if ( entity === null ) { return this; }
+    let i = this.length - 1;
+    while(i >= 0) {
+      if (this[i]._equals(entity)) {
+        if (this.relationship.back) {
+          let e = this[i];
+          try {
+            e[this.relationship.back].remove(this);
+          } catch (err) {
+            e[this.relationship.back] = null;
+          }
+        }
+        this.splice(i, 1);
+      }
+      i -= 1;
+    }
+    this._events.emit(EntityArray.REMOVE, entity);
+    return this;
+  }
+  add(entity: E): EntityArray<E> {
+    let found = this.entity[this.field]
+        .filter((e: E) => EntityComparator(e, entity)).length > 0;
+    if (!found) {
+      this.push(entity);
+      if (this.relationship.back) {
+        entity[this.relationship.back] = this.entity;
+      }
+      this._events.emit(EntityArray.ADD, entity);
+    }
+    return this;
+  }
+}
+
+

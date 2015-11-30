@@ -123,7 +123,7 @@ declare module JEFRi {
     _encode(): any;
     toJSON(): any;
     _destroy(): void;
-    _equal(e: Entity): boolean;
+    _equals(e: Entity): boolean;
   }
 
   export interface EntityMetadata {

@@ -61,6 +61,67 @@ const HasAHasAContext = {
   }
 };
 
+
+module HasAHasMany {
+  export interface Foo extends JEFRi.Entity {
+    foo_id: string;
+    bar_id: string;
+    bar: Bar;
+  }
+
+  export interface Bar extends JEFRi.Entity {
+    bar_id: string;
+    foo: JEFRi.EntityArray<Foo>;
+  }
+}
+
+
+const HasAHasManyContext = {
+  entities: {
+    Foo: {
+      key: "foo_id",
+      properties: {
+        foo_id: {
+          type: "string"
+        },
+        bar_id: {
+          type: "string"
+        }
+      },
+      relationships: {
+        bar: {
+          type: "has_a",
+          property: "bar_id",
+          to: {
+            type: "Bar",
+            property: "bar_id"
+          },
+          back: "foo"
+        }
+      }
+    },
+    Bar: {
+      key: "bar_id",
+      properties: {
+        bar_id: {
+          type: "string"
+        }
+      },
+      relationships: {
+        foo: {
+          type: "has_many",
+          property: "bar_id",
+          to: {
+            type: "Foo",
+            property: "foo_id"
+          },
+          back: "bar"
+        }
+      }
+    }
+  }
+};
+
 import { expect } from 'chai';
 import { Runtime } from '../../';
 
@@ -94,8 +155,8 @@ describe("JEFRi Relationships", function() {
     let bar = runtime.build<HasAHasA.Bar>("Bar", { foo_id: foo.id() });
     let bid = bar.id(true);
 
-    expect(bar.foo._equal(foo)).to.be.true;
-    expect(foo.bar._equal(bar)).to.be.true;
+    expect(bar.foo._equals(foo)).to.be.true;
+    expect(foo.bar._equals(bar)).to.be.true;
 
     expect(foo.id(true)).to.equal(fid, "Anchor kept id.");
     expect(bar.id(true)).to.equal(bid, "Related kept id.");
@@ -103,79 +164,30 @@ describe("JEFRi Relationships", function() {
     expect(foo.bar_id).to.equal(bar.bar_id, "Anchor rel prop is Related rel prop.");
   });
 
-/*
-  it("has_many/has_a set", function(done) {
+  it("has_many/has_a set", function() {
     "Testing has_many to has_a relationships.";
-    var bar, bid, fida, fidb, foo_a, foo_b, runtime;
-    runtime = new JEFRi.Runtime("", {
-      debug: {
-        context: {
-          entities: {
-            Foo: {
-              key: "foo_id",
-              properties: {
-                foo_id: {
-                  type: "string"
-                },
-                bar_id: {
-                  type: "string"
-                }
-              },
-              relationships: {
-                bar: {
-                  type: "has_a",
-                  property: "bar_id",
-                  to: {
-                    type: "Bar",
-                    property: "bar_id"
-                  },
-                  back: "foo"
-                }
-              }
-            },
-            Bar: {
-              key: "bar_id",
-              properties: {
-                bar_id: {
-                  type: "string"
-                }
-              },
-              relationships: {
-                foo: {
-                  type: "has_many",
-                  property: "bar_id",
-                  to: {
-                    type: "Foo",
-                    property: "foo_id"
-                  },
-                  back: "bar"
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-    ok(runtime._instances.Foo, "Runtime instantiated.");
-    foo_a = runtime.build("Foo");
-    foo_b = runtime.build("Foo");
-    fida = foo_a.id();
-    fidb = foo_b.id();
-    bar = runtime.build("Bar");
-    bid = bar.id();
+    let runtime = new Runtime("", { debug: { context: HasAHasManyContext } });
+
+    let foo_a = runtime.build<HasAHasMany.Foo>("Foo");
+    let foo_b = runtime.build<HasAHasMany.Foo>("Foo");
+    let fida = foo_a.id();
+    let fidb = foo_b.id();
+
+    let bar = runtime.build<HasAHasMany.Bar>("Bar");
+    let bid = bar.id();
     foo_a.bar = bar;
     foo_b.bar = bar;
-    equal(foo_a.bar_id, bid, "Many side a got correct has_a id.");
-    equal(foo_b.bar_id, bid, "Many side b got correct has_a id.");
-    equal(bar.foo.length, 2, "bar has two foo");
+    expect(foo_a.bar_id).to.equal(bid, "Many side a got correct has_a id.");
+    expect(foo_b.bar_id).to.equal(bid, "Many side b got correct has_a id.");
+    expect(bar.foo.length).to.equal(2, "bar has two foo");
     foo_a.bar = null;
-    strictEqual(foo_a.bar_id, null, true, "foo_a bar_id unset.");
-    equal(bar.foo.length, 1, "bar has one foo after removal.");
+    expect(foo_a.bar_id).to.equal(null, "foo_a bar_id unset.");
+    expect(bar.foo.length).to.equal(1, "bar has one foo after removal.");
     bar.foo.remove(foo_b);
-    strictEqual(foo_b.bar_id, null, "foo_b bar_id unset");
-    equal(bar.foo.length, 0, "bar has no foo");
-    return done();
+    expect(foo_b.bar_id).to.equal(null, "foo_b bar_id unset");
+    expect(bar.foo.length).to.equal(0, "bar has no foo");
   });
+/*
   return it("has_list", function(done) {
     "Testing has_list relationships.";
     var bars, foo, foo2, result, runtime, transaction;
