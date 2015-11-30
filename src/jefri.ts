@@ -39,18 +39,22 @@ export class EntityArray<E extends JEFRi.Entity> extends Array<E> {
     this._events.emit(EntityArray.REMOVE, entity);
     return this;
   }
-  add(entity: E): EntityArray<E> {
-    let found = this.entity[this.field]
-        .filter((e: E) => EntityComparator(e, entity)).length > 0;
-    if (!found) {
-      this.push(entity);
-      if (this.relationship.back) {
-        entity[this.relationship.back] = this.entity;
+
+  add(entity: E|E[]): EntityArray<E> {
+    if(entity instanceof Array) {
+      entity.map((e: E) => this.add(e));
+    } else {
+      let found = this.entity[this.field]
+          .filter((e: E) => EntityComparator(e, <E>entity)).length > 0;
+      if (!found) {
+        this.push(<E>entity);
+        if (this.relationship.back) {
+          entity[this.relationship.back] = this.entity;
+        }
+        this._events.emit(EntityArray.ADD, entity);
       }
-      this._events.emit(EntityArray.ADD, entity);
     }
     return this;
   }
 }
-
 

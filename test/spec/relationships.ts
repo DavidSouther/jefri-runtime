@@ -122,6 +122,53 @@ const HasAHasManyContext = {
   }
 };
 
+
+module HasList {
+  export interface Foo extends JEFRi.Entity {
+    foo_id: string;
+    bar_ids: string[];
+    bars: JEFRi.EntityArray<Bar>;
+  }
+
+  export interface Bar extends JEFRi.Entity {
+    bar_id: string;
+  }
+}
+
+const HasListContext = {
+  entities: {
+    Foo: {
+      key: "foo_id",
+      properties: {
+        foo_id: {
+          type: "string"
+        },
+        bar_ids: {
+          type: "list"
+        }
+      },
+      relationships: {
+        bars: {
+          type: "has_many",
+          property: "bar_ids",
+          to: {
+            type: "Bar",
+            property: "bar_id"
+          }
+        }
+      }
+    },
+    Bar: {
+      key: "bar_id",
+      properties: {
+        bar_id: {
+          type: "string"
+        }
+      }
+    }
+  }
+};
+
 import { expect } from 'chai';
 import { Runtime } from '../../';
 
@@ -187,53 +234,21 @@ describe("JEFRi Relationships", function() {
     expect(foo_b.bar_id).to.equal(null, "foo_b bar_id unset");
     expect(bar.foo.length).to.equal(0, "bar has no foo");
   });
-/*
-  return it("has_list", function(done) {
+
+  return it("has_list", function() {
     "Testing has_list relationships.";
-    var bars, foo, foo2, result, runtime, transaction;
-    runtime = new JEFRi.Runtime("", {
-      debug: {
-        context: {
-          entities: {
-            Foo: {
-              key: "foo_id",
-              properties: {
-                foo_id: {
-                  type: "string"
-                },
-                bar_ids: {
-                  type: "list"
-                }
-              },
-              relationships: {
-                bars: {
-                  type: "has_many",
-                  property: "bar_ids",
-                  to: {
-                    type: "Bar",
-                    property: "bar_id"
-                  }
-                }
-              }
-            },
-            Bar: {
-              key: "bar_id",
-              properties: {
-                bar_id: {
-                  type: "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    });
-    foo = runtime.build("Foo");
-    bars = [runtime.build("Bar"), runtime.build("Bar"), runtime.build("Bar")];
-    foo.bars = bars;
-    foo.bars.add(runtime.build("Bar"));
-    ok(foo.bars.length, 4, 'Entity was added.');
-    ok(foo.bar_ids.length, 4, 'Has all IDs.');
+    let runtime = new Runtime("", { debug: { context: HasListContext } });
+    let foo = runtime.build<HasList.Foo>("Foo");
+    let bars = [
+      runtime.build<HasList.Bar>("Bar"),
+      runtime.build<HasList.Bar>("Bar"),
+      runtime.build<HasList.Bar>("Bar")
+    ];
+    foo.bars.add(bars);
+    foo.bars.add(runtime.build<HasList.Bar>("Bar"));
+    expect(foo.bars.length).to.equal(4, 'Entity was added.');
+    expect(foo.bar_ids.length).to.equal(4, 'Has all IDs.');
+    /*TODO
     transaction = new JEFRi.Transaction();
     transaction.add(foo);
     result = transaction.encode();
@@ -242,7 +257,6 @@ describe("JEFRi Relationships", function() {
     foo2.bars.forEach(function(e) {
       return JEFRi.isEntity(e).should.equal(true);
     });
-    return done();
+    */
   });
-*/
 });

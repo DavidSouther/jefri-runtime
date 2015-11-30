@@ -262,54 +262,54 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 		# 		@_modified._count += 1
 		# 		@emit "modified", [field, related]
 		# 		@
+			#
+			# get: ->
+			# 	if @_relationships[field] is undefined
+			# 		# Just need the one...
+			# 		@_relationships[field] = ec._instances[relationship.to.type][@[relationship.property]]
+			# 		# Make sure we found one
+			# 		if @_relationships[field] is undefined
+			# 			# If not, create it.
+			# 			key = {}
+			# 			key[relationship.to.property] = @[relationship.property]
+			# 			@[field] = ec.build(relationship.to.type, key)
+			#
+			# 	return @_relationships[field]
 
-			get: ->
-				if @_relationships[field] is undefined
-					# Just need the one...
-					@_relationships[field] = ec._instances[relationship.to.type][@[relationship.property]]
-					# Make sure we found one
-					if @_relationships[field] is undefined
-						# If not, create it.
-						key = {}
-						key[relationship.to.property] = @[relationship.property]
-						@[field] = ec.build(relationship.to.type, key)
-
-				return @_relationships[field]
-
-		# Generate an accessor for a many to one relationship, where a single
-		# remote entity's property matches the local entitie's key.
-		_has_many = ->
-			enumerable: true
-			configurable: false
-			# Return the set of entities in the relationship.
-			get: ->
-				# Check if the field has ever been set
-				if not (field of @_relationships)
-					# The field hasn't been set, so we haven't ever gotten this relationship before.
-					@_relationships[field] = new EntityArray @, field, relationship
-					# We'll need to go through and fix that.
-					# We'll need to grab everything who points to us...
-					# Loop over every entity this relationship could point to
-					for id, type of ec._instances[relationship.to.type]
-						# If these are related
-						if type[relationship.to.property] is @[relationship.property]
-							# Add it
-							@_relationships[field].add type
-				@_relationships[field]
-
-			# Add an entity to the relationship.
-			set: (relations...) ->
-				relations = relations.reduce(((a, b)->a.concat(b)), [])
-				# Lazy load
-				@[field]
-				for entity in relations
-					#There is not a local reference to the found entity.
-					@_relationships[field].add entity
-
-				@_modified._count += 1
-				# Notify observers
-				@emit "modified", [field, arguments]
-				@
+		# # Generate an accessor for a many to one relationship, where a single
+		# # remote entity's property matches the local entitie's key.
+		# _has_many = ->
+		# 	enumerable: true
+		# 	configurable: false
+		# 	# Return the set of entities in the relationship.
+		# 	get: ->
+		# 		# Check if the field has ever been set
+		# 		if not (field of @_relationships)
+		# 			# The field hasn't been set, so we haven't ever gotten this relationship before.
+		# 			@_relationships[field] = new EntityArray @, field, relationship
+		# 			# We'll need to go through and fix that.
+		# 			# We'll need to grab everything who points to us...
+		# 			# Loop over every entity this relationship could point to
+		# 			for id, type of ec._instances[relationship.to.type]
+		# 				# If these are related
+		# 				if type[relationship.to.property] is @[relationship.property]
+		# 					# Add it
+		# 					@_relationships[field].add type
+		# 		@_relationships[field]
+			# 
+			# # Add an entity to the relationship.
+			# set: (relations...) ->
+			# 	relations = relations.reduce(((a, b)->a.concat(b)), [])
+			# 	# Lazy load
+			# 	@[field]
+			# 	for entity in relations
+			# 		#There is not a local reference to the found entity.
+			# 		@_relationships[field].add entity
+			#
+			# 	@_modified._count += 1
+			# 	# Notify observers
+			# 	@emit "modified", [field, arguments]
+			# 	@
 
 		_has_many_list = ->
 			enumerable: true
@@ -348,13 +348,13 @@ module.exports = JEFRi.Runtime = (contextUri, options, protos) ->
 
 		access =
 			# The multiple relations functions.
-			if "has_many" is relationship.type
-				if "list" is definition.properties[relationship.property]?.type
+			# if "has_many" is relationship.type
+			# 	if "list" is definition.properties[relationship.property]?.type
 					_has_many_list()
-				else
+				# else
 					_has_many()
-			else
-				_has_one()
+			# else
+			# 	_has_one()
 
 		Object.defineProperty definition.Constructor::, field, access
 

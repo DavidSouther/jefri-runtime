@@ -186,9 +186,11 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     if (relationship.type === 'has_many') {
       let property = definition.properties[relationship.property];
       if (property && property.type === 'list') {
+        getter = _has_many_list_get;
+        setter = function() {};
       } else {
         getter = _has_many_get;
-        setter = _has_many_set;
+        setter = function() {};
       }
     } else {
       getter = _has_one_get;
@@ -201,6 +203,28 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       get: getter,
       set: setter
     });
+
+    function _has_many_list_get() {
+      this[relationship.property] = this[relationship.property] || [];
+      if (!this._metadata._relationships.hasOwnProperty(field)) {
+        this._metadata._relationships[field] =
+          new EntityArray(this, field, relationship);
+        this[relationship.property].forEach((id: string)=> {
+          this._metadata._relationships[field]
+            .add(this._metadata._runtime._instances[relationship.to.type][id]);
+        });
+        this._metadata._relationships[field]._events
+          .on(EntityArray.ADD, (e: JEFRi.Entity) => {
+            this[relationship.property].push(e.id());
+          });
+        this._metadata._relationships[field]._events
+          .on(EntityArray.REMOVE, (e: JEFRi.Entity) => {
+            let i = this[relationship.property].indexOf(e.id());
+            this[relationship.property].slice(i, 1);
+          });
+      }
+      return this._metadata._relationships[field];
+    }
 
     function _has_many_get() {
       let list = this._metadata._relationships[field];
@@ -215,14 +239,6 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         }
       }
       return list;
-    }
-
-    function _has_many_set(...entities: any[]): void {
-      entities = entities.reduce(((a, b) => a.concat(b)), []);
-      this[field]; // Lazy load
-      for(let entity of entities) {
-        this[field].add(entity);
-      }
     }
 
     function _has_one_get(): JEFRi.Entity {
@@ -268,7 +284,11 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
           this._metadata._relationships[field] = related;
           _resolve_ids.call(this, related);
           if (relationship.back) {
-            related[relationship.back] = this;
+            try {
+              related[relationship.back].add(this);
+            } catch (e) {
+              related[relationship.back] = this;
+            }
           }
         }
         this._events.emit('modified relationship', [field, related]);

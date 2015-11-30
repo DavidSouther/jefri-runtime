@@ -142,7 +142,7 @@ declare module JEFRi {
   }
 
   export interface EntityArray<E extends Entity> extends Array<E> {
-    add(e: E): EntityArray<E>;
+    add(e: E|E[]): EntityArray<E>;
     remove(e: E): EntityArray<E>;
   }
 
