@@ -99,7 +99,7 @@ declare module JEFRi {
     return?: string;
     definitions: {
       [k: string]: string;
-      javascript: string;
+      javascript?: string;
     }
   }
 

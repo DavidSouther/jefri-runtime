@@ -147,6 +147,10 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         definition.relationships[field]
       );
     }
+
+    for (let field in definition.methods) {
+      this._build_method(definition, field, definition.methods[field]);
+    }
   }
 
   _build_mutacc(
@@ -207,12 +211,14 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     function _has_many_list_get() {
       this[relationship.property] = this[relationship.property] || [];
       if (!this._metadata._relationships.hasOwnProperty(field)) {
+        // Create the EntityArray, and fill it from the list property IDs.
         this._metadata._relationships[field] =
           new EntityArray(this, field, relationship);
         this[relationship.property].forEach((id: string)=> {
           this._metadata._relationships[field]
             .add(this._metadata._runtime._instances[relationship.to.type][id]);
         });
+        // Use the EntityArray events to maintain the accuracy of the ID list.
         this._metadata._relationships[field]._events
           .on(EntityArray.ADD, (e: JEFRi.Entity) => {
             this[relationship.property].push(e.id());
@@ -314,6 +320,23 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         }
       }
     }
+  }
+
+  private _build_method(
+    definition: JEFRi.ContextEntity,
+    field: string,
+    method: JEFRi.EntityMethod
+  ): void {
+    method.definitions = method.definitions || {};
+    method.order = method.order || [];
+    let params: any[] = method.order;
+    let body: string = method.definitions['javascript'] || '';
+    let fn: Function = function() {};
+    if (!body.match(/window/)) {
+      params.push(body);
+      fn = Function.apply(null, params);
+    }
+    definition.Constructor.prototype[field] = fn;
   }
 
   constructor(contextUri: string, options: any = {}, protos: any = {}) {
