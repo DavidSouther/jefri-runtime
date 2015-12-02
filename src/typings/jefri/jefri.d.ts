@@ -43,7 +43,14 @@ declare module JEFRi {
     extend(type: string, protos: Prototypes): Runtime;
     intern<E extends Entity>(entity: E, updateOnIntern: boolean): E;
     build<E extends Entity>(type: string, obj: any): E;
+    find<E extends Entity>(spec: EntitySpec): E[];
     remove(entity: Entity): Runtime;
+  }
+
+  export interface EntitySpec {
+    _type: string;
+    _id?: string;
+    [k: string]: any;
   }
 
   export interface Context {

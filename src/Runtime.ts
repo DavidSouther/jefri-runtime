@@ -133,7 +133,19 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       },
       _equals: function(other: JEFRi.Entity) {
         return EntityComparator(this, other);
-      }
+      },
+      _destroy: lock(function(): void {
+        this._events.emit('destroying');
+        for (let name in Object.keys(definition.relationships)) {
+          let rel = definition.relationships[name];
+          try {
+            this[name].remove(this);
+          } catch (e) {
+            this[name] = null;
+          }
+        }
+        this[definition.key] = '';
+      })
     });
 
     for (let field in definition.properties) {
@@ -366,7 +378,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
 
   build<E extends JEFRi.Entity>(entityType: string, obj: any = {}): E {
     if (!this._context.entities[entityType]) {
-      throw new Error(`${entityType} not defined in this runtime.`);
+      throw new Error(`JEFRi::Runtime::build '${entityType}' is not a defined type in this context.`);
     }
 
     let definition = this.definition(entityType);
@@ -393,9 +405,18 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       });
   }
 
-  clear(): Runtime { return this; }
+  clear(): Runtime {
+    this._instances = {};
+    return this;
+  }
 
-  definition(name: string): JEFRi.ContextEntity { return null; }
+  definition(name: string|JEFRi.Entity): JEFRi.ContextEntity {
+    if (typeof name === 'string') {
+      return this._context.entities[name];
+    } else {
+      return name._definition;
+    }
+  }
 
   extend(type: string, protos: JEFRi.Prototypes): JEFRi.Runtime { return this; }
 
@@ -405,6 +426,41 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
 
   remove(entity: JEFRi.Entity): JEFRi.Runtime {
     return this;
+  }
+
+  find<E extends JEFRi.Entity>(spec: string|JEFRi.EntitySpec): E[] {
+    let rspec: JEFRi.EntitySpec = null;
+    if (typeof spec === 'string') {
+      rspec = { _type: spec };
+    } else {
+      rspec = spec;
+    }
+
+    let to_return: E[] = [];
+
+    let def = this.definition(rspec._type);
+    if (def.key in rspec || '_id' in rspec) {
+      let key = rspec[def.key] || rspec['_id'];
+      let e = this._instances[rspec._type][key];
+      if (e) {
+        to_return.push(e);
+      }
+    } else {
+      for (let id in this._instances[rspec._type]) {
+        let e: E = this._instances[rspec._type][id];
+        let matches = true;
+        for (let key in rspec) {
+          if (e[key] !== rspec[key]) {
+            matches = false;
+          }
+        }
+        if (matches) {
+          to_return.push(e);
+        }
+      }
+    }
+
+    return to_return;
   }
 }
 

@@ -4,7 +4,8 @@ export function EntityComparator(a: JEFRi.Entity, b: JEFRi.Entity): boolean {
 
 export function isEntity(obj: any): boolean {
   // Duck type check if an object is an entity.
-  return typeof obj._type == "function" && typeof obj.id == "function" || false;
+  return obj && typeof obj._type == "function" && typeof obj.id == "function"
+    || false;
 }
 
 import { EventEmitter } from 'events';
