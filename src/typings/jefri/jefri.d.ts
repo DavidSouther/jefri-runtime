@@ -119,6 +119,11 @@ declare module JEFRi {
     name: string;
   }
 
+  export interface BareEntity {
+    _id: string;
+    _type: string;
+  }
+
   export interface Entity {
     _id: string;
     _definition: ContextEntity;
@@ -127,7 +132,7 @@ declare module JEFRi {
     _type(full?: boolean): string;
     _metadata: EntityMetadata;
     id(full?: boolean): string;
-    _encode(): any;
+    _encode(): BareEntity;
     toJSON(): any;
     _destroy(): void;
     _equals(e: Entity): boolean;
@@ -154,16 +159,21 @@ declare module JEFRi {
   }
 
   export interface TransactionStatic {
-    new(context: Context, store: Store): Transaction;
+    new(spec: TransactionSpec|(JEFRi.Entity|JEFRi.BareEntity)[], store: Store): Transaction;
   }
 
   export interface Transaction extends NodeJS.EventEmitter {
-    encode(): {attributes: JEFRiAttributes, entities: Entity[]};
+    encode(): {attributes: Properties, entities: BareEntity[]};
     toString(): string;
     get(store?: Store): Promise<Transaction>;
     persist(store?: Store): Promise<Transaction>;
-    add(entities: Array<Entity>): Transaction;
-    attributes(attrs: JEFRiAttributes): Transaction;
+    add(entities: Array<BareEntity>): Transaction;
+    setAttributes(attrs: Properties): Transaction;
+  }
+
+  export interface TransactionSpec {
+    attributes?: Properties,
+    entities?: BareEntity[]
   }
 
   export interface EntityComparator {
