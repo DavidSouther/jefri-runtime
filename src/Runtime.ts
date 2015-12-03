@@ -32,7 +32,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
 
   // Takes a "raw" context object and orders it into the internal _context
   // storage. Also builds constructors and prototypes for the context.
-  _set_context(context: JEFRi.Context, protos: JEFRi.Prototypes): void {
+  private _set_context(context: JEFRi.Context, protos: JEFRi.Prototypes): void {
     // Save the context-level attributes.
     Object.assign(this._context.attributes, context.attributes || {});
 
@@ -44,7 +44,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     }
   }
 
-  _build_constructor(definition: JEFRi.ContextEntity, type: string): void {
+  private _build_constructor(definition: JEFRi.ContextEntity, type: string): void {
     // Save a reference to the context, for constructors.
     const EC = this;
     this._context.entities[type] = definition;
@@ -115,7 +115,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     this._build_prototype(type, definition);
   }
 
-  _build_prototype(
+  private _build_prototype(
       type: string,
       definition: JEFRi.ContextEntity,
       protos: JEFRi.Prototypes = {}
@@ -165,7 +165,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     }
   }
 
-  _build_mutacc(
+  private _build_mutacc(
       definition: JEFRi.ContextEntity,
       field: string,
       property: JEFRi.EntityProperty
@@ -191,7 +191,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     });
   }
 
-  _build_relationship(
+  private _build_relationship(
       definition: JEFRi.ContextEntity,
       field: string,
       relationship: JEFRi.EntityRelationship
