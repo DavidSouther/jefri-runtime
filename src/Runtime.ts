@@ -1,5 +1,9 @@
 import { EventEmitter } from 'events';
-import { UUID, request, lock } from 'jefri-jiffies';
+//import { UUID, request, lock } from 'jefri-jiffies';
+
+import jiffies = require('jefri-jiffies');
+let { UUID, request, lock } = jiffies;
+
 
 import { EntityComparator, EntityArray } from './jefri';
 
