@@ -1,21 +1,35 @@
 import { EventEmitter } from 'events';
 
-export type AnyEntity = JEFRi.Entity | JEFRi.BareEntity;
+import {
+  StoreExecutionType,
+} from './enums';
 
-export class Transaction extends EventEmitter implements JEFRi.Transaction {
-  public attributes: JEFRi.Properties = {};
+import {
+  BareEntity,
+  Entity,
+  IStore,
+  ITransaction,
+  JEFRiAttributes,
+  Properties,
+  TransactionSpec,
+} from './interfaces';
+
+export type AnyEntity = Entity | BareEntity;
+
+export class Transaction extends EventEmitter implements ITransaction {
+  public attributes: Properties = {};
   public entities: AnyEntity[] = [];
 
-  constructor(spec: JEFRi.TransactionSpec = {}, public store: JEFRi.Store = null) {
+  constructor(spec: TransactionSpec = {}, public store: IStore = null) {
     super();
     this.attributes = spec.attributes || {};
     this.add(spec.entities || []);
   }
 
-  encode(): {attributes: JEFRi.Properties, entities: JEFRi.BareEntity[]} {
+  encode(): {attributes: Properties, entities: BareEntity[]} {
     let transaction = {
       attributes: this.attributes,
-      entities: <JEFRi.BareEntity[]>[]
+      entities: <BareEntity[]>[]
     };
 
     for(let entity in this.entities) {
@@ -32,19 +46,19 @@ export class Transaction extends EventEmitter implements JEFRi.Transaction {
     return JSON.stringify(this.encode());
   }
 
-  get(store: JEFRi.Store = this.store): Promise<Transaction> {
+  get(store: IStore = this.store): Promise<ITransaction> {
     this.emit('getting');
-    return store.execute(JEFRi.StoreExecutionType.get, this)
+    return store.execute(StoreExecutionType.get, this)
         .then(() => Promise.resolve(this));
   }
 
-  persist(store: JEFRi.Store = this.store): Promise<Transaction> {
+  persist(store: IStore = this.store): Promise<Transaction> {
     this.emit('persisting');
-    return store.execute(JEFRi.StoreExecutionType.persist, this)
+    return store.execute(StoreExecutionType.persist, this)
         .then((t: Transaction) => {
           for(let entity in t.entities) {
-            if ((<JEFRi.Entity>entity)._events) {
-              (<JEFRi.Entity>entity)._events.emit('persisted');
+            if ((<Entity>entity)._events) {
+              (<Entity>entity)._events.emit('persisted');
             }
           }
           return Promise.resolve(this);
@@ -56,7 +70,7 @@ export class Transaction extends EventEmitter implements JEFRi.Transaction {
     return this;
   }
 
-  setAttributes(attrs: JEFRi.Properties): Transaction {
+  setAttributes(attrs: Properties): Transaction {
     Object.assign(this.attributes, attrs);
     return this;
   }

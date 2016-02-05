@@ -1,7 +1,7 @@
 import { expect } from 'chai';
-import { Runtime } from '../../';
+import { Runtime } from '../../src/index';
 
-import * as UserContext from 'user-context';
+import * as UserContext from '../context/typing/user-context';
 
 describe("Properties", function() {
   let runtime: Runtime = null;

@@ -1,5 +1,7 @@
+import { Entity } from '../../src/index';
+
 module Methods {
-  export interface Foo extends JEFRi.Entity {
+  export interface Foo extends Entity {
     foo_id: string;
     a: number;
     b: number;
@@ -56,7 +58,7 @@ const MethodContext = {
 };
 
 import { expect } from 'chai';
-import { Runtime } from '../../';
+import { Runtime } from '../../src/index';
 
 function equal(a: any, b: any, c: string) {
   expect(a).to.equal(b, c);

@@ -5,11 +5,16 @@
         "module": "commonjs",
         "noEmitOnError": true,
         "noImplicitAny": true,
-        "outDir": "../dist",
+        "outDir": "./build",
         "preserveConstEnums": true,
         "rootDir": ".",
         "sourceMap": true,
         "suppressImplicitAnyIndexErrors": true,
         "target": "es5"
-    }
+    },
+    "exclude": [
+        "node_modules",
+        "build",
+        "lib"
+    ]
 }

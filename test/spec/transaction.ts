@@ -1,6 +1,7 @@
 import { UUID } from 'jefri-jiffies';
 import { expect } from 'chai';
-import { Runtime, Transaction } from '../../';
+import { Runtime, Transaction } from '../../src/index';
+import * as UserContext from '../context/typing/user-context';
 
 describe("Transaction", function() {
   let runtime: Runtime = null;

@@ -1,5 +1,6 @@
 import { expect } from 'chai';
-import { isEntity, Runtime } from '../../';
+import { isEntity, Entity, Runtime } from '../../src/index';
+import * as UserContext from '../context/typing/user-context';
 
 function equal(a: any, b: any, m: string = '') {
   expect(a).to.equal(b, m);
@@ -52,7 +53,7 @@ describe("JEFRi Runtime", function() {
   });
 
   it("errors on exceptional cases", function() {
-      function getBadType(): JEFRi.Entity {
+      function getBadType(): Entity {
         return runtime.build("foo");
       };
       let checkBadTypeException = "JEFRi::Runtime::build 'foo' is not a defined type in this context.";

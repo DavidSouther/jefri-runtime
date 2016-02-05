@@ -1,11 +1,12 @@
+import { Entity, EntityArray } from '../../src/index';
 module HasAHasA {
-  export interface Foo extends JEFRi.Entity {
+  export interface Foo extends Entity {
     foo_id: string;
     bar_id: string;
     bar: Bar;
   }
 
-  export interface Bar extends JEFRi.Entity {
+  export interface Bar extends Entity {
     bar_id: string;
     foo_id: string;
     foo: Foo;
@@ -63,15 +64,15 @@ const HasAHasAContext = {
 
 
 module HasAHasMany {
-  export interface Foo extends JEFRi.Entity {
+  export interface Foo extends Entity {
     foo_id: string;
     bar_id: string;
     bar: Bar;
   }
 
-  export interface Bar extends JEFRi.Entity {
+  export interface Bar extends Entity {
     bar_id: string;
-    foo: JEFRi.EntityArray<Foo>;
+    foo: EntityArray<Foo>;
   }
 }
 
@@ -124,13 +125,13 @@ const HasAHasManyContext = {
 
 
 module HasList {
-  export interface Foo extends JEFRi.Entity {
+  export interface Foo extends Entity {
     foo_id: string;
     bar_ids: string[];
-    bars: JEFRi.EntityArray<Bar>;
+    bars: EntityArray<Bar>;
   }
 
-  export interface Bar extends JEFRi.Entity {
+  export interface Bar extends Entity {
     bar_id: string;
   }
 }
@@ -170,7 +171,7 @@ const HasListContext = {
 };
 
 import { expect } from 'chai';
-import { Runtime } from '../../';
+import { Runtime } from '../../src/index';
 
 describe("JEFRi Relationships", function() {
   it("has_a/has_a set", function() {
@@ -249,13 +250,13 @@ describe("JEFRi Relationships", function() {
     expect(foo.bars.length).to.equal(4, 'Entity was added.');
     expect(foo.bar_ids.length).to.equal(4, 'Has all IDs.');
     /*TODO
-    transaction = new JEFRi.Transaction();
+    transaction = new Transaction();
     transaction.add(foo);
     result = transaction.encode();
     equal(result.entities[0].bar_ids.length, 4, "Has all entities.");
     foo2 = runtime.expand(result)[0];
     foo2.bars.forEach(function(e) {
-      return JEFRi.isEntity(e).should.equal(true);
+      return isEntity(e).should.equal(true);
     });
     */
   });

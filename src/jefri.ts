@@ -1,4 +1,10 @@
-export function EntityComparator(a: JEFRi.Entity, b: JEFRi.Entity): boolean {
+import { EventEmitter } from 'events';
+import { Entity, EntityRelationship } from './interfaces';
+
+/**
+ * Entity collection utilities.
+ */
+export function EntityComparator(a: Entity, b: Entity): boolean {
   return a && b && a._type() === b._type() && a.id() === b.id();
 }
 
@@ -8,13 +14,14 @@ export function isEntity(obj: any): boolean {
     || false;
 }
 
-import { EventEmitter } from 'events';
-
-export class EntityArray<E extends JEFRi.Entity> extends Array<E> {
+/**
+ * JEFRi-aware Array, which manages relationships.
+ */
+export class EntityArray<E extends Entity> extends Array<E> {
   constructor(
-    private entity: JEFRi.Entity,
+    private entity: Entity,
     private field: string,
-    private relationship: JEFRi.EntityRelationship,
+    private relationship: EntityRelationship,
     public _events: NodeJS.EventEmitter = new EventEmitter()
   ) { super() }
 

@@ -1,56 +1,47 @@
-declare module JEFRiContext {
-  interface Context {
-    Context: JEFRiContext.Context;
-    Entity: JEFRiContext.Entity;
-    Property: JEFRiContext.Property;
-    Relationship: JEFRiContext.Relationship;
-  }
+import {
+  Entity as JEFRiEntity,
+  EntityArray as JEFRiEntityArray
+} from '../../../src/index';
 
-  interface Context extends JEFRi.Entity {
-    context_id: string;
-    name: string;
-    entities: JEFRi.EntityArray<Entity>;
-    export(): string;
-  }
-
-  interface Entity extends JEFRi.Entity {
-    entity_id: string;
-    context_id: string;
-    name: string;
-    key: string;
-    context: Context;
-    properties: JEFRi.EntityArray<Property>;
-    relationships: JEFRi.EntityArray<Relationship>;
-    export(): string;
-  }
-
-  interface Property extends JEFRi.Entity {
-    property_id: string;
-    entity_id: string;
-    name: string;
-    type: string;
-    entity: Entity;
-    export(): string;
-  }
-
-  interface Relationship extends JEFRi.Entity {
-    relationship_id: string;
-    name: string;
-    type: string;
-    to_id: string;
-    to_property: string;
-    from_id: string;
-    from_property: string;
-    back: string;
-    to: Entity;
-    from: Entity;
-    normalize(): string;
-    export(): string;
-  }
+export interface Context extends JEFRiEntity {
+  context_id: string;
+  name: string;
+  entities: JEFRiEntityArray<Entity>;
+  export(): string;
 }
 
-declare module "jefri-context" {
-  var c: JEFRiContext.Context;
-  export = c;
+export interface Entity extends JEFRiEntity {
+  entity_id: string;
+  context_id: string;
+  name: string;
+  key: string;
+  context: Context;
+  properties: JEFRiEntityArray<Property>;
+  relationships: JEFRiEntityArray<Relationship>;
+  export(): string;
+}
+
+export interface Property extends JEFRiEntity {
+  property_id: string;
+  entity_id: string;
+  name: string;
+  type: string;
+  entity: Entity;
+  export(): string;
+}
+
+export interface Relationship extends JEFRiEntity {
+  relationship_id: string;
+  name: string;
+  type: string;
+  to_id: string;
+  to_property: string;
+  from_id: string;
+  from_property: string;
+  back: string;
+  to: Entity;
+  from: Entity;
+  normalize(): string;
+  export(): string;
 }
 

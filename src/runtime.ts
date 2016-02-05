@@ -1,14 +1,29 @@
 import { EventEmitter } from 'events';
-//import { UUID, request, lock } from 'jefri-jiffies';
-
-import jiffies = require('jefri-jiffies');
-let { UUID, request, lock } = jiffies;
-
+import { UUID, request, lock } from 'jefri-jiffies';
 
 import { EntityComparator, EntityArray } from './jefri';
 
-export class Runtime extends EventEmitter implements JEFRi.Runtime {
-  public ready: Promise<JEFRi.Runtime> = null;
+import {
+  BareEntity,
+  Context,
+  ContextEntities,
+  ContextEntity,
+  Entity,
+  EntityMetadata,
+  EntityMethod,
+  EntityProperty,
+  EntityRelationship,
+  EntitySpec,
+  EntityStatic,
+  IRuntime,
+  IRuntimeOptions,
+  JEFRiAttributes,
+  Properties,
+  Prototypes
+} from './interfaces';
+
+export class Runtime extends EventEmitter implements IRuntime {
+  public ready: Promise<IRuntime> = null;
   public settings: {[k: string]: any} = {
     updateOnIntern: true
   };
@@ -36,7 +51,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
 
   // Takes a "raw" context object and orders it into the internal _context
   // storage. Also builds constructors and prototypes for the context.
-  private _set_context(context: JEFRi.Context, protos: JEFRi.Prototypes): void {
+  private _set_context(context: Context, protos: Prototypes): void {
     // Save the context-level attributes.
     Object.assign(this._context.attributes, context.attributes || {});
 
@@ -48,7 +63,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     }
   }
 
-  private _build_constructor(definition: JEFRi.ContextEntity, type: string): void {
+  private _build_constructor(definition: ContextEntity, type: string): void {
     // Save a reference to the context, for constructors.
     const EC = this;
     this._context.entities[type] = definition;
@@ -58,7 +73,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       // Set the entity key as early as possible.
       proto[definition.key] = proto[definition.key] || UUID.v4();
 
-      let metadata: JEFRi.EntityMetadata = {
+      let metadata: EntityMetadata = {
         _new: true,
         _modified: {_count: 0},
         _fields: {},
@@ -121,8 +136,8 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
 
   private _build_prototype(
       type: string,
-      definition: JEFRi.ContextEntity,
-      protos: JEFRi.Prototypes = {}
+      definition: ContextEntity,
+      protos: Prototypes = {}
   ) {
     definition.Constructor.prototype = Object.create({
       _type: function(full: boolean = false): string {
@@ -135,7 +150,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         if (full) { typePrefix = this._type() + '/'; }
         return `${typePrefix}${this._id}`;
       },
-      _equals: function(other: JEFRi.Entity) {
+      _equals: function(other: Entity) {
         return EntityComparator(this, other);
       },
       _destroy: lock(function(): void {
@@ -170,9 +185,9 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
   }
 
   private _build_mutacc(
-      definition: JEFRi.ContextEntity,
+      definition: ContextEntity,
       field: string,
-      property: JEFRi.EntityProperty
+      property: EntityProperty
   ): void {
     Object.defineProperty(definition.Constructor.prototype, field, {
       configurable: false,
@@ -196,12 +211,12 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
   }
 
   private _build_relationship(
-      definition: JEFRi.ContextEntity,
+      definition: ContextEntity,
       field: string,
-      relationship: JEFRi.EntityRelationship
+      relationship: EntityRelationship
   ): void {
-    let getter: () => JEFRi.Entity = null;
-    let setter: (value: JEFRi.Entity|any[]) => void = null;
+    let getter: () => Entity = null;
+    let setter: (value: Entity|any[]) => void = null;
 
     if (relationship.type === 'has_many') {
       let property = definition.properties[relationship.property];
@@ -236,11 +251,11 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
         });
         // Use the EntityArray events to maintain the accuracy of the ID list.
         this._metadata._relationships[field]._events
-          .on(EntityArray.ADD, (e: JEFRi.Entity) => {
+          .on(EntityArray.ADD, (e: Entity) => {
             this[relationship.property].push(e.id());
           });
         this._metadata._relationships[field]._events
-          .on(EntityArray.REMOVE, (e: JEFRi.Entity) => {
+          .on(EntityArray.REMOVE, (e: Entity) => {
             let i = this[relationship.property].indexOf(e.id());
             this[relationship.property].slice(i, 1);
           });
@@ -263,7 +278,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       return list;
     }
 
-    function _has_one_get(): JEFRi.Entity {
+    function _has_one_get(): Entity {
       if (!this._metadata._relationships[field]) {
         // Try to find the entity
         let instances = this._metadata._runtime._instances;
@@ -286,9 +301,9 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     //
     // The local entity should have some string property whose value will match
     // the remote entity's key property.
-    function _has_one_set(): (related: JEFRi.Entity) => void {
-      return <(r: JEFRi.Entity) => void>lock(
-          function(related: JEFRi.Entity
+    function _has_one_set(): (related: Entity) => void {
+      return <(r: Entity) => void>lock(
+          function(related: Entity
       ): void {
         if(related === null) {
           // Actually a remove.
@@ -317,7 +332,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
       });
     }
 
-    function _resolve_ids(related: JEFRi.Entity) {
+    function _resolve_ids(related: Entity) {
       if(!related) {
         this.relationship.property = void 0;
       } else if (definition.key === relationship.property) {
@@ -339,9 +354,9 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
   }
 
   private _build_method(
-    definition: JEFRi.ContextEntity,
+    definition: ContextEntity,
     field: string,
-    method: JEFRi.EntityMethod
+    method: EntityMethod
   ): void {
     method.definitions = method.definitions || {};
     method.order = method.order || [];
@@ -359,7 +374,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     super();
 
     let ready: {
-      promise: Promise<JEFRi.Runtime>,
+      promise: Promise<IRuntime>,
       reject: Function,
       resolve: Function
     } = { promise: null, reject: null, resolve: null };
@@ -380,7 +395,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     }
   }
 
-  build<E extends JEFRi.Entity>(entityType: string, obj: any = {}): E {
+  build<E extends Entity>(entityType: string, obj: any = {}): E {
     if (!this._context.entities[entityType]) {
       throw new Error(`JEFRi::Runtime::build '${entityType}' is not a defined type in this context.`);
     }
@@ -396,7 +411,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     return entity;
   }
 
-  load(contextUri: string, protos: JEFRi.Prototypes = {}): Promise<JEFRi.Runtime> {
+  load(contextUri: string, protos: Prototypes = {}): Promise<IRuntime> {
     return request(contextUri)
       .then((data: string) => {
         this._set_context(JSON.parse(data), protos);
@@ -414,7 +429,7 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     return this;
   }
 
-  definition(name: string|JEFRi.Entity): JEFRi.ContextEntity {
+  definition(name: string|Entity): ContextEntity {
     if (typeof name === 'string') {
       return this._context.entities[name];
     } else {
@@ -422,18 +437,18 @@ export class Runtime extends EventEmitter implements JEFRi.Runtime {
     }
   }
 
-  extend(type: string, protos: JEFRi.Prototypes): JEFRi.Runtime { return this; }
+  extend(type: string, protos: Prototypes): IRuntime { return this; }
 
-  intern<E extends JEFRi.Entity>(entity: E, updateOnIntern: boolean): E {
+  intern<E extends Entity>(entity: E, updateOnIntern: boolean): E {
     return entity;
   }
 
-  remove(entity: JEFRi.Entity): JEFRi.Runtime {
+  remove(entity: Entity): IRuntime {
     return this;
   }
 
-  find<E extends JEFRi.Entity>(spec: string|JEFRi.EntitySpec): E[] {
-    let rspec: JEFRi.EntitySpec = null;
+  find<E extends Entity>(spec: string|EntitySpec): E[] {
+    let rspec: EntitySpec = null;
     if (typeof spec === 'string') {
       rspec = { _type: spec };
     } else {
