@@ -1,4 +1,4 @@
-import { Entity } from '../../../src/index'; 
+import {Entity} from '../../../src/index';
 
 export interface User extends Entity {
   user_id: string;

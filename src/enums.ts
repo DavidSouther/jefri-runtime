@@ -2,11 +2,18 @@
  * JEFRi Enumerations.
  */
 export enum JEFRiPropertyType {
-  int, float, string, list, object, boolean
+  int,
+  float,
+  string,
+  list,
+  object,
+  boolean
 }
 
 export enum EntityStatus {
-  NEW, PERSISTED, MODIFIED
+  NEW,
+  PERSISTED,
+  MODIFIED
 }
 
 export enum EntityRelationshipType {
@@ -15,6 +22,7 @@ export enum EntityRelationshipType {
   has_many
 }
 
-export enum StoreExecutionType { get, persist }
-
-
+export enum StoreExecutionType {
+  get,
+  persist
+}

@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 
 import {
   StoreExecutionType,
@@ -27,12 +27,9 @@ export class Transaction extends EventEmitter implements ITransaction {
   }
 
   encode(): {attributes: Properties, entities: BareEntity[]} {
-    let transaction = {
-      attributes: this.attributes,
-      entities: <BareEntity[]>[]
-    };
+    let transaction = {attributes: this.attributes, entities:<BareEntity[]>[]};
 
-    for(let entity in this.entities) {
+    for (let entity in this.entities) {
       if (typeof entity._encode === 'function') {
         transaction.entities.push(entity._encode());
       } else {
@@ -42,9 +39,7 @@ export class Transaction extends EventEmitter implements ITransaction {
     return transaction;
   }
 
-  toString(): string {
-    return JSON.stringify(this.encode());
-  }
+  toString(): string { return JSON.stringify(this.encode()); }
 
   get(store: IStore = this.store): Promise<ITransaction> {
     this.emit('getting');
@@ -56,7 +51,7 @@ export class Transaction extends EventEmitter implements ITransaction {
     this.emit('persisting');
     return store.execute(StoreExecutionType.persist, this)
         .then((t: Transaction) => {
-          for(let entity in t.entities) {
+          for (let entity in t.entities) {
             if ((<Entity>entity)._events) {
               (<Entity>entity)._events.emit('persisted');
             }

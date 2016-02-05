@@ -1,4 +1,4 @@
-import { EventEmitter } from 'events';
+import {EventEmitter} from 'events';
 import {
   EntityRelationshipType,
   EntityStatus,
@@ -7,10 +7,7 @@ import {
 } from './enums';
 
 export interface IRuntimeOptions {
-  updateOnIntern?: boolean,
-  debug?: {
-    context: Context
-  };
+  updateOnIntern?: boolean, debug?: {context: Context};
 }
 
 export interface EntitySpec {
@@ -36,9 +33,9 @@ export interface ContextEntity {
   type?: string;
   Constructor?: Function;
   key: string;
-  properties: { [k: string]: EntityProperty };
-  relationships?: { [k: string]: EntityRelationship };
-  methods?: { [k: string]: EntityMethod };
+  properties: {[k: string]: EntityProperty};
+  relationships?: {[k: string]: EntityRelationship};
+  methods?: {[k: string]: EntityMethod};
 }
 
 export interface EntityProperty {
@@ -47,46 +44,35 @@ export interface EntityProperty {
 }
 
 export interface EntityRelationship {
-  type: string|EntityRelationshipType;
+  type: string | EntityRelationshipType;
   property: string;
-  to: {
-    type: string,
-    property: string;
-  };
+  to: { type: string, property: string; };
   back?: string;
 }
 
 export interface EntityMethod {
-  params?: { [k: string]: string },
-  order?: string[],
-  return?: string;
+  params?: {[k: string]: string}, order?: string[], return?: string;
   definitions: {
     [k: string]: string;
     javascript?: string;
   }
 }
 
-export interface Properties {
-  [k: string]: any;
-}
+export interface Properties { [k: string]: any; }
 
-export interface Prototypes {
-  [k: string]: Function;
-}
+export interface Prototypes { [k: string]: Function; }
 
 export interface EntityMetadata {
   _runtime: IRuntime;
   _new: boolean;
   _modified: {
     _count: number,
-    [k: string]: number|string|boolean|Array<number|string|boolean>
+    [k: string]: number | string | boolean | Array<number | string | boolean>
   };
   _fields: {
-    [k: string]: number|string|boolean|Array<number|string|boolean>
+    [k: string]: number | string | boolean | Array<number | string | boolean>
   };
-  _relationships: {
-    [k: string]: Entity|Array<Entity>
-  };
+  _relationships: {[k: string]: Entity | Array<Entity>};
 }
 
 export interface Context {
@@ -94,13 +80,9 @@ export interface Context {
   entities: ContextEntities;
 }
 
-export interface JEFRiAttributes {
-  [k: string]: any;
-}
+export interface JEFRiAttributes { [k: string]: any; }
 
-export interface ContextEntities {
-  [k: string]: ContextEntity;
-}
+export interface ContextEntities { [k: string]: ContextEntity; }
 
 export interface EntityStatic {
   new (props: Properties): Entity;
@@ -115,7 +97,7 @@ export interface BareEntity {
 export interface Entity {
   _id: string;
   _definition: ContextEntity;
-  _status: string|EntityStatus;
+  _status: string | EntityStatus;
   _events: NodeJS.EventEmitter;
   _type(full?: boolean): string;
   _metadata: EntityMetadata;
@@ -127,8 +109,7 @@ export interface Entity {
 }
 
 export interface TransactionSpec {
-  attributes?: Properties,
-  entities?: BareEntity[]
+  attributes?: Properties, entities?: BareEntity[]
 }
 
 export interface ITransaction {

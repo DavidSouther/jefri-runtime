@@ -1,4 +1,4 @@
-import { Entity, EntityArray } from '../../src/index';
+import {Entity, EntityArray} from '../../src/index';
 module HasAHasA {
   export interface Foo extends Entity {
     foo_id: string;
@@ -17,44 +17,24 @@ const HasAHasAContext = {
   entities: {
     Foo: {
       key: "foo_id",
-      properties: {
-        foo_id: {
-          type: "string"
-        },
-        bar_id: {
-          type: "string"
-        }
-      },
+      properties: {foo_id: {type: "string"}, bar_id: {type: "string"}},
       relationships: {
         bar: {
           type: "has_a",
           property: "bar_id",
-          to: {
-            type: "Bar",
-            property: "bar_id"
-          },
+          to: {type: "Bar", property: "bar_id"},
           back: "foo"
         }
       }
     },
     Bar: {
       key: "bar_id",
-      properties: {
-        bar_id: {
-          type: "string"
-        },
-        foo_id: {
-          type: "string"
-        }
-      },
+      properties: {bar_id: {type: "string"}, foo_id: {type: "string"}},
       relationships: {
         foo: {
           type: "has_a",
           property: "foo_id",
-          to: {
-            type: "Foo",
-            property: "foo_id"
-          },
+          to: {type: "Foo", property: "foo_id"},
           back: "bar"
         }
       }
@@ -81,41 +61,24 @@ const HasAHasManyContext = {
   entities: {
     Foo: {
       key: "foo_id",
-      properties: {
-        foo_id: {
-          type: "string"
-        },
-        bar_id: {
-          type: "string"
-        }
-      },
+      properties: {foo_id: {type: "string"}, bar_id: {type: "string"}},
       relationships: {
         bar: {
           type: "has_a",
           property: "bar_id",
-          to: {
-            type: "Bar",
-            property: "bar_id"
-          },
+          to: {type: "Bar", property: "bar_id"},
           back: "foo"
         }
       }
     },
     Bar: {
       key: "bar_id",
-      properties: {
-        bar_id: {
-          type: "string"
-        }
-      },
+      properties: {bar_id: {type: "string"}},
       relationships: {
         foo: {
           type: "has_many",
           property: "bar_id",
-          to: {
-            type: "Foo",
-            property: "foo_id"
-          },
+          to: {type: "Foo", property: "foo_id"},
           back: "bar"
         }
       }
@@ -131,56 +94,33 @@ module HasList {
     bars: EntityArray<Bar>;
   }
 
-  export interface Bar extends Entity {
-    bar_id: string;
-  }
+  export interface Bar extends Entity { bar_id: string; }
 }
 
 const HasListContext = {
   entities: {
     Foo: {
       key: "foo_id",
-      properties: {
-        foo_id: {
-          type: "string"
-        },
-        bar_ids: {
-          type: "list"
-        }
-      },
+      properties: {foo_id: {type: "string"}, bar_ids: {type: "list"}},
       relationships: {
         bars: {
           type: "has_many",
           property: "bar_ids",
-          to: {
-            type: "Bar",
-            property: "bar_id"
-          }
+          to: {type: "Bar", property: "bar_id"}
         }
       }
     },
-    Bar: {
-      key: "bar_id",
-      properties: {
-        bar_id: {
-          type: "string"
-        }
-      }
-    }
+    Bar: {key: "bar_id", properties: {bar_id: {type: "string"}}}
   }
 };
 
-import { expect } from 'chai';
-import { Runtime } from '../../src/index';
+import {expect} from 'chai';
+import {Runtime} from '../../src/index';
 
 describe("JEFRi Relationships", function() {
   it("has_a/has_a set", function() {
     "Testing has_a relationships with back references.";
-    let runtime = new Runtime("", {
-      debug: {
-        context: HasAHasAContext
-      }
-    });
+    let runtime = new Runtime("", {debug: {context: HasAHasAContext}});
     let foo = runtime.build<HasAHasA.Foo>("Foo");
     let fid = foo.id(true);
     let bar = runtime.build<HasAHasA.Bar>("Bar");
@@ -190,17 +130,19 @@ describe("JEFRi Relationships", function() {
     expect(bar.id(true)).to.equal(bid, "Related kept id.");
     expect(foo.bar).to.equal(bar, "Anchor points to correct related.");
     expect(bar.foo).to.equal(foo, "Related points to correct anchor.");
-    expect(foo.foo_id).to.equal(bar.foo_id, "Anchor rel prop is Related rel prop.");
-    expect(foo.bar_id).to.equal(bar.bar_id, "Anchor rel prop is Related rel prop.");
+    expect(foo.foo_id)
+        .to.equal(bar.foo_id, "Anchor rel prop is Related rel prop.");
+    expect(foo.bar_id)
+        .to.equal(bar.bar_id, "Anchor rel prop is Related rel prop.");
   });
 
   it("has_a/has_a (key relationship) set", function() {
     "Testing specifically relationships through primary keys.";
-    let runtime = new Runtime("", { debug: { context: HasAHasAContext } });
+    let runtime = new Runtime("", {debug: {context: HasAHasAContext}});
 
     let foo = runtime.build<HasAHasA.Foo>("Foo");
     let fid = foo.id(true);
-    let bar = runtime.build<HasAHasA.Bar>("Bar", { foo_id: foo.id() });
+    let bar = runtime.build<HasAHasA.Bar>("Bar", {foo_id: foo.id()});
     let bid = bar.id(true);
 
     expect(bar.foo._equals(foo)).to.be.true;
@@ -208,13 +150,15 @@ describe("JEFRi Relationships", function() {
 
     expect(foo.id(true)).to.equal(fid, "Anchor kept id.");
     expect(bar.id(true)).to.equal(bid, "Related kept id.");
-    expect(foo.foo_id).to.equal(bar.foo_id, "Anchor rel prop is Related rel prop.");
-    expect(foo.bar_id).to.equal(bar.bar_id, "Anchor rel prop is Related rel prop.");
+    expect(foo.foo_id)
+        .to.equal(bar.foo_id, "Anchor rel prop is Related rel prop.");
+    expect(foo.bar_id)
+        .to.equal(bar.bar_id, "Anchor rel prop is Related rel prop.");
   });
 
   it("has_many/has_a set", function() {
     "Testing has_many to has_a relationships.";
-    let runtime = new Runtime("", { debug: { context: HasAHasManyContext } });
+    let runtime = new Runtime("", {debug: {context: HasAHasManyContext}});
 
     let foo_a = runtime.build<HasAHasMany.Foo>("Foo");
     let foo_b = runtime.build<HasAHasMany.Foo>("Foo");
@@ -238,7 +182,7 @@ describe("JEFRi Relationships", function() {
 
   return it("has_list", function() {
     "Testing has_list relationships.";
-    let runtime = new Runtime("", { debug: { context: HasListContext } });
+    let runtime = new Runtime("", {debug: {context: HasListContext}});
     let foo = runtime.build<HasList.Foo>("Foo");
     let bars = [
       runtime.build<HasList.Bar>("Bar"),

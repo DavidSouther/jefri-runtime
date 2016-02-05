@@ -1,5 +1,5 @@
-import { EventEmitter } from 'events';
-import { Entity, EntityRelationship } from './interfaces';
+import {EventEmitter} from 'events';
+import {Entity, EntityRelationship} from './interfaces';
 
 /**
  * Entity collection utilities.
@@ -10,27 +10,28 @@ export function EntityComparator(a: Entity, b: Entity): boolean {
 
 export function isEntity(obj: any): boolean {
   // Duck type check if an object is an entity.
-  return obj && typeof obj._type == "function" && typeof obj.id == "function"
-    || false;
+  return obj && typeof obj._type == "function" && typeof obj.id == "function" ||
+         false;
 }
 
 /**
  * JEFRi-aware Array, which manages relationships.
  */
 export class EntityArray<E extends Entity> extends Array<E> {
-  constructor(
-    private entity: Entity,
-    private field: string,
-    private relationship: EntityRelationship,
-    public _events: NodeJS.EventEmitter = new EventEmitter()
-  ) { super() }
+  constructor(private entity: Entity, private field: string,
+              private relationship: EntityRelationship,
+              public _events: NodeJS.EventEmitter = new EventEmitter()) {
+    super()
+  }
 
   static ADD = 'add';
   static REMOVE = 'remove';
   remove(entity: E): EntityArray<E> {
-    if ( entity === null ) { return this; }
+    if (entity === null) {
+      return this;
+    }
     let i = this.length - 1;
-    while(i >= 0) {
+    while (i >= 0) {
       if (this[i]._equals(entity)) {
         if (this.relationship.back) {
           let e = this[i];
@@ -48,12 +49,13 @@ export class EntityArray<E extends Entity> extends Array<E> {
     return this;
   }
 
-  add(entity: E|E[]): EntityArray<E> {
-    if(entity instanceof Array) {
+  add(entity: E | E[]): EntityArray<E> {
+    if (entity instanceof Array) {
       entity.map((e: E) => this.add(e));
     } else {
       let found = this.entity[this.field]
-          .filter((e: E) => EntityComparator(e, <E>entity)).length > 0;
+                      .filter((e: E) => EntityComparator(e, <E>entity))
+                      .length > 0;
       if (!found) {
         this.push(<E>entity);
         if (this.relationship.back) {
@@ -65,4 +67,3 @@ export class EntityArray<E extends Entity> extends Array<E> {
     return this;
   }
 }
-

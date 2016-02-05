@@ -44,4 +44,3 @@ export interface Relationship extends JEFRiEntity {
   normalize(): string;
   export(): string;
 }
-
