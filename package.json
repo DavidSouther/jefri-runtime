@@ -1,7 +1,7 @@
 {
   "name": "jefri",
   "title": "JEFRi: Entity Framework Runtime",
-  "version": "1.2.4",
+  "version": "1.2.5-pre1",
   "description": "A full-featured entity framework for javascript.",
   "homepage": "http://www.jefri.org",
   "bugs": "https://github.com/jefri/jefri-runtime/issues",
@@ -19,8 +19,9 @@
   "main": "./lib/index.js",
   "typings": "./lib/index.d.ts",
   "scripts": {
+    "format": "clang-format --style=google -i {src,test}/**/*.ts",
     "build": "rm -rf build/ lib/ && tsc && webpack build/test/**/*.js build/tests.js",
-    "pretest": "npm run build",
+    "pretest": "npm run format ; npm run build",
     "test": "mocha build/test/spec/*.js && karma start karma.config.js"
   },
   "repository": {
@@ -37,9 +38,6 @@
       "type": "MIT"
     }
   ],
-  "browser": {
-    "./src/index.js": "./src/browser.js"
-  },
   "devDependencies": {
     "chai": "^3.4.1",
     "glob": "^6.0.1",

@@ -353,7 +353,8 @@ export class Runtime extends EventEmitter implements IRuntime {
     definition.Constructor.prototype[field] = fn;
   }
 
-  constructor(contextUri: string, options: IRuntimeOptions = {}, protos: any = {}) {
+  constructor(contextUri: string, options: IRuntimeOptions = {},
+              protos: any = {}) {
     super();
 
     let ready: {

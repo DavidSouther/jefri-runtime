@@ -29,15 +29,16 @@ describe("Properties", function() {
   });
 
   it.skip("is not new after expansion", function() {
-    (<any>runtime).expand({
-      entities: [
-        {
-          "_type": "User",
-          "_id": "0065ea14-36e7-4aae-9729-623740d1a240",
-          "name": "David"
-        }
-      ]
-    });
+    (<any>runtime)
+        .expand({
+          entities: [
+            {
+              "_type": "User",
+              "_id": "0065ea14-36e7-4aae-9729-623740d1a240",
+              "name": "David"
+            }
+          ]
+        });
     let ct: UserContext.User = null;
     ct = runtime.find<UserContext.User>('User')[0];
     expect(ct._status).to.equal("PERSISTED");
