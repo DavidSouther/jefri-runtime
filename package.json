@@ -1,7 +1,7 @@
 {
   "name": "jefri",
   "title": "JEFRi: Entity Framework Runtime",
-  "version": "1.2.5-pre1",
+  "version": "1.2.5-pre2",
   "description": "A full-featured entity framework for javascript.",
   "homepage": "http://www.jefri.org",
   "bugs": "https://github.com/jefri/jefri-runtime/issues",
@@ -20,7 +20,7 @@
   "typings": "./lib/index.d.ts",
   "scripts": {
     "format": "clang-format --style=google -i {src,test}/**/*.ts",
-    "build": "rm -rf build/ lib/ && tsc && webpack build/test/**/*.js build/tests.js",
+    "build": "rm -rf build/ lib/ && tsc && cp -a ./build/src ./lib && webpack build/test/**/*.js build/tests.js",
     "pretest": "npm run format ; npm run build",
     "test": "mocha build/test/spec/*.js && karma start karma.config.js"
   },
