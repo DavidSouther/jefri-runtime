@@ -28,9 +28,8 @@ describe("Properties", function() {
     expect(user._metadata._modified._count).to.equal(2);
   });
 
-
   it.skip("is not new after expansion", function() {
-    runtime.expand({
+    (<any>runtime).expand({
       entities: [
         {
           "_type": "User",
@@ -40,7 +39,7 @@ describe("Properties", function() {
       ]
     });
     let ct: UserContext.User = null;
-    // runtime.find<UserContext.User>('User')[0];
-    ct._status().should.equal("PERSISTED");
+    ct = runtime.find<UserContext.User>('User')[0];
+    expect(ct._status).to.equal("PERSISTED");
   });
 });

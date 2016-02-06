@@ -21,7 +21,7 @@
   "scripts": {
     "build": "rm -rf build/ lib/ && tsc && webpack build/test/**/*.js build/tests.js",
     "pretest": "npm run build",
-    "test": "mocha test/spec/*.js && karma start karma.config.js"
+    "test": "mocha build/test/spec/*.js && karma start karma.config.js"
   },
   "repository": {
     "type": "git",

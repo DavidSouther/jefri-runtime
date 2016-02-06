@@ -152,18 +152,20 @@ export class Runtime extends EventEmitter implements IRuntime {
       _equals: function(other: Entity) {
         return EntityComparator(this, other);
       },
-      _destroy: lock(function(): void {
-        this._events.emit('destroying');
-        for (let name in Object.keys(definition.relationships)) {
-          let rel = definition.relationships[name];
-          try {
-            this[name].remove(this);
-          } catch (e) {
-            this[name] = null;
-          }
-        }
-        this[definition.key] = '';
-      })
+      _destroy:
+          lock(function():
+                   void {
+                     this._events.emit('destroying');
+                     for (let name in Object.keys(definition.relationships)) {
+                       let rel = definition.relationships[name];
+                       try {
+                         this[name].remove(this);
+                       } catch (e) {
+                         this[name] = null;
+                       }
+                     }
+                     this[definition.key] = '';
+                   })
     });
 
     for (let field in definition.properties) {
@@ -351,7 +353,7 @@ export class Runtime extends EventEmitter implements IRuntime {
     definition.Constructor.prototype[field] = fn;
   }
 
-  constructor(contextUri: string, options: any = {}, protos: any = {}) {
+  constructor(contextUri: string, options: IRuntimeOptions = {}, protos: any = {}) {
     super();
 
     let ready: {
