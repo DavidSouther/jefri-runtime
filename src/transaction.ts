@@ -5,8 +5,10 @@ import {
 } from './enums';
 
 import {
+  AnyEntity,
   BareEntity,
   Entity,
+  EntitySpec,
   IStore,
   ITransaction,
   JEFRiAttributes,
@@ -14,24 +16,24 @@ import {
   TransactionSpec,
 } from './interfaces';
 
-export type AnyEntity = Entity | BareEntity;
 
-export class Transaction extends EventEmitter implements ITransaction {
+export class Transaction<T extends AnyEntity | EntitySpec> extends EventEmitter
+    implements ITransaction<T> {
   public attributes: Properties = {};
-  public entities: AnyEntity[] = [];
+  public entities: T[] = [];
 
-  constructor(spec: TransactionSpec = {}, public store: IStore = null) {
+  constructor(spec: TransactionSpec<T> = {}, public store: IStore = null) {
     super();
     this.attributes = spec.attributes || {};
     this.add(spec.entities || []);
   }
 
-  encode(): {attributes: Properties, entities: BareEntity[]} {
-    let transaction = {attributes: this.attributes, entities:<BareEntity[]>[]};
+  encode(): {attributes: Properties, entities: T[]} {
+    let transaction = {attributes: this.attributes, entities:<T[]>[]};
 
     for (let entity in this.entities) {
       if (typeof entity._encode === 'function') {
-        transaction.entities.push(entity._encode());
+        transaction.entities.push(<T>entity._encode());
       } else {
         transaction.entities.push(entity);
       }
@@ -41,31 +43,28 @@ export class Transaction extends EventEmitter implements ITransaction {
 
   toString(): string { return JSON.stringify(this.encode()); }
 
-  get(store: IStore = this.store): Promise<ITransaction> {
+  get(store: IStore = this.store): Promise<ITransaction<Entity>> {
     this.emit('getting');
-    return store.execute(StoreExecutionType.get, this)
-        .then(() => Promise.resolve(this));
+    return store.execute(StoreExecutionType.get, this);
   }
 
-  persist(store: IStore = this.store): Promise<Transaction> {
+  persist(store: IStore = this.store): Promise<Transaction<Entity>> {
     this.emit('persisting');
     return store.execute(StoreExecutionType.persist, this)
-        .then((t: Transaction) => {
+        .then((t: Transaction<Entity>) => {
           for (let entity in t.entities) {
-            if ((<Entity>entity)._events) {
-              (<Entity>entity)._events.emit('persisted');
-            }
+            (<Entity>entity)._events.emit('persisted');
           }
-          return Promise.resolve(this);
+          return t;
         });
   }
 
-  add(entities: AnyEntity[]): Transaction {
+  add(entities: T[]): Transaction<T> {
     this.entities = this.entities.concat(entities);
     return this;
   }
 
-  setAttributes(attrs: Properties): Transaction {
+  setAttributes(attrs: Properties): Transaction<T> {
     Object.assign(this.attributes, attrs);
     return this;
   }

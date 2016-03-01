@@ -66,4 +66,6 @@ export class EntityArray<E extends Entity> extends Array<E> {
     }
     return this;
   }
+
+  toArray(): E[] { return this.map((e: E) => e); }
 }

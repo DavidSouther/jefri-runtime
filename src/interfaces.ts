@@ -92,6 +92,7 @@ export interface EntityStatic {
 export interface BareEntity {
   _id: string;
   _type: string;
+  [k: string]: string | number | boolean | string[];
 }
 
 export interface Entity {
@@ -108,22 +109,30 @@ export interface Entity {
   _equals(e: Entity): boolean;
 }
 
-export interface TransactionSpec {
-  attributes?: Properties, entities?: BareEntity[]
+export type AnyEntity = Entity | BareEntity;
+
+export interface TransactionSpec<T extends AnyEntity | EntitySpec> {
+  attributes?: Properties, entities?: T[]
 }
 
-export interface ITransaction {
-  encode(): {attributes: Properties, entities: BareEntity[]};
+export interface ITransaction<T extends AnyEntity | EntitySpec> {
+  entities: T[];
+  encode(): {attributes: Properties, entities: T[]};
   toString(): string;
-  get(store?: IStore): Promise<ITransaction>;
-  persist(store?: IStore): Promise<ITransaction>;
-  add(entities: Array<BareEntity>): ITransaction;
-  setAttributes(attrs: Properties): ITransaction;
+  get(store?: IStore): Promise<ITransaction<Entity>>;
+  persist(store?: IStore): Promise<ITransaction<Entity>>;
+  add(entities: T[]): ITransaction<T>;
+  setAttributes(attrs: Properties): ITransaction<T>;
+}
+
+export interface IStoreStatic {
+  new (runtime: IRuntime, options?: JEFRiAttributes): IStore;
 }
 
 export interface IStore {
-  new (options?: JEFRiAttributes): IStore;
-  execute(type: StoreExecutionType, t: ITransaction): Promise<ITransaction>;
-  get(t: ITransaction): Promise<ITransaction>;
-  persist(t: ITransaction): Promise<ITransaction>;
+  execute(
+      type: StoreExecutionType,
+      t: ITransaction<AnyEntity | EntitySpec>): Promise<ITransaction<Entity>>;
+  get(t: ITransaction<EntitySpec>): Promise<ITransaction<Entity>>;
+  persist(t: ITransaction<BareEntity>): Promise<ITransaction<Entity>>;
 }

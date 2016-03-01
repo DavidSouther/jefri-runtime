@@ -24,9 +24,9 @@ import {
 
 export class Runtime extends EventEmitter implements IRuntime {
   public ready: Promise<IRuntime> = null;
-  public settings: {[k: string]: any} = {updateOnIntern: true};
+  public settings: {[k: string] : any} = {updateOnIntern : true};
 
-  private _context = {meta: {}, contexts: {}, entities: {}, attributes: {}};
+  private _context = {meta : {}, contexts : {}, entities : {}, attributes : {}};
 
   private _instances = {};
 
@@ -34,18 +34,18 @@ export class Runtime extends EventEmitter implements IRuntime {
   // These handle most of the heavy lifting of building Entity classes.
   private _default(type: string): any {
     switch (type) {
-      case "list":
-        return [];
-      case "object":
-        return {};
-      case "boolean":
-        return false;
-      case "int":
-      case "float":
-        return 0;
-      case "string":
-      default:
-        return "";
+    case "list":
+      return [];
+    case "object":
+      return {};
+    case "boolean":
+      return false;
+    case "int":
+    case "float":
+      return 0;
+    case "string":
+    default:
+      return "";
     }
   }
 
@@ -69,46 +69,46 @@ export class Runtime extends EventEmitter implements IRuntime {
     this._context.entities[type] = definition;
     this._instances[type] = {};
 
-    definition.Constructor = function(proto: {[k: string]: any} = {}) {
+    definition.Constructor = function(proto: {[k: string] : any} = {}) {
       // Set the entity key as early as possible.
       proto[definition.key] = proto[definition.key] || UUID.v4();
 
       let metadata: EntityMetadata = {
-        _new: true,
-        _modified: {_count: 0},
-        _fields: {},
-        _relationships: {},
-        _runtime: EC
+        _new : true,
+        _modified : {_count : 0},
+        _fields : {},
+        _relationships : {},
+        _runtime : EC
       };
 
       let events: EventEmitter = new EventEmitter();
 
       Object.defineProperties(this, {
-        _id: {
-          configurable: false,
-          enumerable: true,
-          get: function() { return this[definition.key]; }
+        _id : {
+          configurable : false,
+          enumerable : true,
+          get : function() { return this[definition.key]; }
         },
-        _definition: {
-          configurable: false,
-          enumerable: false,
-          get: function() { return definition; }
+        _definition : {
+          configurable : false,
+          enumerable : false,
+          get : function() { return definition; }
         },
-        _metadata: {
-          configurable: false,
-          enumerable: false,
-          get: function() { return metadata; }
+        _metadata : {
+          configurable : false,
+          enumerable : false,
+          get : function() { return metadata; }
         },
-        _events: {
-          configurable: false,
-          enumerable: false,
-          get: function() { return events; }
+        _events : {
+          configurable : false,
+          enumerable : false,
+          get : function() { return events; }
         },
-        _status: {
-          configurable: false,
-          enumerable: false,
+        _status : {
+          configurable : false,
+          enumerable : false,
           // Determine the status of the entity.
-          get: function() {
+          get : function() {
             if (this._metadata._new) {
               return "NEW";
             } else if (this._metadata._modified._count === 0) {
@@ -122,9 +122,25 @@ export class Runtime extends EventEmitter implements IRuntime {
 
       // Set a bunch of default values, so they're all available.
       for (let name in definition.properties) {
-        let property = definition.properties[name];
-        let dflt = proto[name] || EC._default(property.type);
-        this._metadata._fields[name] = dflt;
+        (function(name: string) {
+          let property = definition.properties[name];
+          let dflt = proto[name] || EC._default(property.type);
+          this._metadata._fields[name] = dflt;
+          Object.defineProperty(this, name, {
+            configurable : false,
+            enumerable : true,
+            get : function() {
+              const descriptor = Object.getOwnPropertyDescriptor(
+                  definition.Constructor.prototype, name);
+              return descriptor.get.call(this);
+            },
+            set : function(value: any) {
+              const descriptor = Object.getOwnPropertyDescriptor(
+                  definition.Constructor.prototype, name);
+              return descriptor.set.call(this, value);
+            }
+          });
+        }.call(this, name));
       }
     };
 
@@ -137,11 +153,11 @@ export class Runtime extends EventEmitter implements IRuntime {
   private _build_prototype(type: string, definition: ContextEntity,
                            protos: Prototypes = {}) {
     definition.Constructor.prototype = Object.create({
-      _type: function(full: boolean = false): string {
+      _type : function(full: boolean = false) : string {
         // Get the entity's type, possibly including the context name.
         return type;
       },
-      id: function(full: boolean = false): string {
+      id : function(full: boolean = false) : string {
         // Return the id, possibly including the simple entity type.
         let typePrefix: string = '';
         if (full) {
@@ -149,10 +165,18 @@ export class Runtime extends EventEmitter implements IRuntime {
         }
         return `${typePrefix}${this._id}`;
       },
-      _equals: function(other: Entity) {
+      _equals : function(other: Entity) {
         return EntityComparator(this, other);
       },
-      _destroy:
+      _encode : function() {
+        return Object.assign(
+            {
+              _type : this._type(),
+              _id : this._id,
+            },
+            this._metadata._fields);
+      },
+      _destroy :
           lock(function():
                    void {
                      this._events.emit('destroying');
@@ -185,10 +209,10 @@ export class Runtime extends EventEmitter implements IRuntime {
   private _build_mutacc(definition: ContextEntity, field: string,
                         property: EntityProperty): void {
     Object.defineProperty(definition.Constructor.prototype, field, {
-      configurable: false,
-      enumerable: true,
-      get: function() { return this._metadata._fields[field]; },
-      set: function(value) {
+      configurable : false,
+      enumerable : true,
+      get : function() { return this._metadata._fields[field]; },
+      set : function(value) {
         // Only update when it is a different value.
         if (this._metadata._fields[field] !== value) {
           // The actual set.
@@ -200,7 +224,7 @@ export class Runtime extends EventEmitter implements IRuntime {
             this._metadata._modified._count += 1;
           }
         }
-        this._events.emit('modified property', [field, value]);
+        this._events.emit('modified property', [ field, value ]);
       }
     });
   }
@@ -226,7 +250,7 @@ export class Runtime extends EventEmitter implements IRuntime {
 
     Object.defineProperty(
         definition.Constructor.prototype, field,
-        {enumerable: false, configurable: false, get: getter, set: setter});
+        {enumerable : false, configurable : false, get : getter, set : setter});
 
     function _has_many_list_get() {
       this[relationship.property] = this[relationship.property] || [];
@@ -275,7 +299,7 @@ export class Runtime extends EventEmitter implements IRuntime {
             instances[relationship.to.type][this[relationship.property]];
         if (!instance) {
           // We need to make one
-          let key = {[relationship.to.property]: this[relationship.property]};
+          let key = {[relationship.to.property] : this[relationship.property]};
           instance = this._metadata._runtime.build(relationship.to.type, key);
         }
         this[field] = instance;
@@ -314,7 +338,7 @@ export class Runtime extends EventEmitter implements IRuntime {
             }
           }
         }
-        this._events.emit('modified relationship', [field, related]);
+        this._events.emit('modified relationship', [ field, related ]);
       });
     }
 
@@ -358,10 +382,10 @@ export class Runtime extends EventEmitter implements IRuntime {
     super();
 
     let ready: {
-      promise: Promise<IRuntime>,
-      reject: Function,
-      resolve: Function
-    } = {promise: null, reject: null, resolve: null};
+      promise : Promise<IRuntime>,
+      reject : Function,
+      resolve : Function
+    } = {promise : null, reject : null, resolve : null};
     this.ready = ready.promise = new Promise((resolve, reject) => {
       ready.resolve = resolve;
       ready.reject = reject;
@@ -388,7 +412,9 @@ export class Runtime extends EventEmitter implements IRuntime {
     let definition = this.definition(entityType);
     let entity: E = null;
     if (definition && obj.hasOwnProperty(definition.key)) {
-    } else {
+      entity = <E>this._instances[entityType][obj._id];
+    }
+    if (!entity) {
       entity = <E>(new this._context.entities[entityType].Constructor(obj));
       this._instances[entityType][entity.id()] = entity;
     }
@@ -433,7 +459,7 @@ export class Runtime extends EventEmitter implements IRuntime {
   find<E extends Entity>(spec: string | EntitySpec): E[] {
     let rspec: EntitySpec = null;
     if (typeof spec === 'string') {
-      rspec = {_type: spec};
+      rspec = {_type : spec};
     } else {
       rspec = spec;
     }

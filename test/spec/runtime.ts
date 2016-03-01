@@ -70,4 +70,19 @@ describe("JEFRi Runtime", function() {
     expect(users.length).to.equal(1);
     expect(users[0].id()).to.equal(user.id());
   });
+
+  it('can be encoded', function() {
+    let user = runtime.build<UserContext.User>(
+        "User", {name: "southerd", address: "davidsouther@gmail.com"});
+    user.authinfo = runtime.build<UserContext.Authinfo>("Authinfo", {});
+    expect(user._encode())
+        .to.deep.equal({
+          _type: 'User',
+          _id: user._id,
+          user_id: user._id,
+          name: 'southerd',
+          address: 'davidsouther@gmail.com',
+          nicknames: [],
+        });
+  });
 });
