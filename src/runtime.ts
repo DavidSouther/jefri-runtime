@@ -69,7 +69,7 @@ export class Runtime extends EventEmitter implements IRuntime {
     this._context.entities[type] = definition;
     this._instances[type] = {};
 
-    definition.Constructor = function(proto: {[k: string] : any} = {}) {
+    const ctor = function(proto: {[k: string] : any} = {}) {
       // Set the entity key as early as possible.
       proto[definition.key] = proto[definition.key] || UUID.v4();
 
@@ -144,7 +144,9 @@ export class Runtime extends EventEmitter implements IRuntime {
       }
     };
 
-    definition.Constructor.name = type;
+    // Use eval to create a function with a name suitable for logs, etc
+    const body = `ctor.apply(this, arguments);`;
+    eval(`definition.Constructor = function ${type}(){ ${body} }`);
 
     // Set up the prototype for this entity.
     this._build_prototype(type, definition);

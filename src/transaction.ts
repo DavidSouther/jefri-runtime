@@ -31,9 +31,9 @@ export class Transaction<T extends AnyEntity | EntitySpec> extends EventEmitter
   encode(): {attributes: Properties, entities: T[]} {
     let transaction = {attributes: this.attributes, entities:<T[]>[]};
 
-    for (let entity in this.entities) {
-      if (typeof entity._encode === 'function') {
-        transaction.entities.push(<T>entity._encode());
+    for (let entity of this.entities) {
+      if (typeof (entity as any)._encode === 'function') {
+        transaction.entities.push(<T>(entity as any)._encode());
       } else {
         transaction.entities.push(entity);
       }
@@ -52,7 +52,7 @@ export class Transaction<T extends AnyEntity | EntitySpec> extends EventEmitter
     this.emit('persisting');
     return store.execute(StoreExecutionType.persist, this)
         .then((t: Transaction<Entity>) => {
-          for (let entity in t.entities) {
+          for (let entity of t.entities) {
             (<Entity>entity)._events.emit('persisted');
           }
           return t;

@@ -17,8 +17,8 @@ export interface EntitySpec {
 }
 
 export interface IRuntime extends EventEmitter {
-  // constructor(options: IRuntimeOptions): IRuntime;
-  // constructor(contextUri: string, options: IRuntimeOptions): IRuntime;
+  //new(options: IRuntimeOptions): IRuntime;
+  //new(contextUri: string, options: IRuntimeOptions): IRuntime;
   load(contextUri: string, protos?: Prototypes): Promise<IRuntime>;
   clear(): IRuntime;
   definition(name: string): ContextEntity;
