@@ -145,8 +145,9 @@ export class Runtime extends EventEmitter implements IRuntime {
     };
 
     // Use eval to create a function with a name suitable for logs, etc
-    const body = `ctor.apply(this, arguments);`;
-    eval(`definition.Constructor = function ${type}(){ ${body} }`);
+    definition.Constructor = eval(`(function() {
+      return function ${type}(){ctor.apply(this, arguments); }
+    }());`);
 
     // Set up the prototype for this entity.
     this._build_prototype(type, definition);
@@ -368,15 +369,17 @@ export class Runtime extends EventEmitter implements IRuntime {
   private _build_method(definition: ContextEntity, field: string,
                         method: EntityMethod): void {
     method.definitions = method.definitions || {};
-    method.order = method.order || [];
-    let params: any[] = method.order;
+    let params: string[] = method.order || [];
     let body: string = method.definitions['javascript'] || '';
-    let fn: Function = function() {};
-    if (!body.match(/window/)) {
-      params.push(body);
-      fn = Function.apply(null, params);
+    let name = `\$\$${definition.Constructor.name}\$\$${field}\$\$`;
+    if (body.match(/window/)) {
+      body = "// TODO better sanitization";
     }
-    definition.Constructor.prototype[field] = fn;
+    definition.Constructor.prototype[field] = new Function(`
+      return function ${name}(${params.join(', ')}) {
+        ${body}
+      };`
+    )();
   }
 
   constructor(contextUri: string, options: IRuntimeOptions = {},
